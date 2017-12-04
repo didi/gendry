@@ -1,4 +1,6 @@
 ## Gendry
+[![Build Status](https://www.travis-ci.org/didi/Gendry.svg?branch=master)](https://www.travis-ci.org/didi/Gendry)
+[![Hex.pm](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/didi/Gendry/blob/master/LICENSE)
 
 **Gendry** is a Go library that helps you operate database. Based on `go-sql-driver/mysql`, it provides a series of simple but useful tools to prepare parameters for calling methods in standard library `database/sql`.
 

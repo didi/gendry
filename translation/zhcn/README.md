@@ -1,4 +1,6 @@
 ## Gendry
+[![Build Status](https://www.travis-ci.org/didi/Gendry.svg?branch=master)](https://www.travis-ci.org/didi/Gendry)
+[![Hex.pm](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/didi/Gendry/blob/master/LICENSE)
 
 **Gendry**是一个用于辅助操作数据库的Go包。基于`go-sql-driver/mysql`，它提供了一系列的方法来为你调用标准库`database/sql`中的方法准备参数。
 
