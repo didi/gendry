@@ -7,8 +7,8 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/didichuxing/gendry/builder"
-	"github.com/didichuxing/gendry/scanner"
+	"github.com/didi/gendry/builder"
+	"github.com/didi/gendry/scanner"
 )
 
 const (

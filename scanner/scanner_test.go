@@ -1,9 +1,12 @@
 package scanner
 
 import (
+	"errors"
 	"testing"
 
 	"time"
+
+	"math"
 
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
@@ -305,5 +308,229 @@ func Test_ScanMap(t *testing.T) {
 		mpArr, err := ScanMap(rows)
 		ass.NoError(err)
 		ass.Equal(tc.out, mpArr)
+	}
+}
+
+func Test_Slice_2_Int(t *testing.T) {
+	type user struct {
+		Age int `ddb:"age"`
+	}
+	var testData = []struct {
+		in  []byte
+		out int
+		err error
+	}{
+		{
+			in:  []byte{'1', '2', '3'},
+			out: 123,
+			err: nil,
+		},
+		{
+			in:  []byte{'0', '2', '3'},
+			out: 23,
+			err: nil,
+		},
+		{
+			in:  []byte{'0'},
+			out: 0,
+			err: nil,
+		},
+		{
+			in:  []byte("9223372036854775807"),
+			out: 9223372036854775807,
+			err: nil,
+		},
+		{
+			in:  []byte("9223372036854775808"),
+			out: 9223372036854775807,
+			err: errors.New("test"),
+		},
+	}
+	var u user
+	ass := assert.New(t)
+	for _, tc := range testData {
+		mp := map[string]interface{}{
+			"age": tc.in,
+		}
+		err := bind(mp, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.Equal(tc.out, u.Age)
+	}
+}
+
+func Test_Slice_2_UInt(t *testing.T) {
+	type user struct {
+		Age uint `ddb:"age"`
+	}
+	var testData = []struct {
+		in  []byte
+		out uint
+		err error
+	}{
+		{
+			in:  []byte{'1', '2', '3'},
+			out: 123,
+			err: nil,
+		},
+		{
+			in:  []byte{'0', '2', '3'},
+			out: 23,
+			err: nil,
+		},
+		{
+			in:  []byte{'0'},
+			out: 0,
+			err: nil,
+		},
+		{
+			in:  []byte("9223372036854775807"),
+			out: 9223372036854775807,
+			err: nil,
+		},
+		{
+			in:  []byte("9223372036854775808"),
+			out: 9223372036854775808,
+			err: nil,
+		},
+		{
+			in:  []byte("18446744073709551615"),
+			out: 18446744073709551615,
+			err: nil,
+		},
+		{
+			in:  []byte("18446744073709551616"),
+			out: 18446744073709551615,
+			err: errors.New("error"),
+		},
+		{
+			in:  []byte("-1"),
+			out: 0xffffffffffffffff,
+			err: errors.New("error"),
+		},
+	}
+	var u user
+	ass := assert.New(t)
+	for _, tc := range testData {
+		mp := map[string]interface{}{
+			"age": tc.in,
+		}
+		err := bind(mp, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.Equal(tc.out, u.Age)
+	}
+}
+
+func Test_Slice_2_Float(t *testing.T) {
+	type user struct {
+		Score float64 `ddb:"score"`
+	}
+	var testData = []struct {
+		in  []byte
+		out float64
+		err error
+	}{
+		{
+			in:  []byte("123"),
+			out: 123,
+			err: nil,
+		},
+		{
+			in:  []byte("023"),
+			out: 23,
+			err: nil,
+		},
+		{
+			in:  []byte("0.1234"),
+			out: 0.1234,
+			err: nil,
+		},
+		{
+			in:  []byte{'0'},
+			out: 0,
+			err: nil,
+		},
+		{
+			in:  []byte("-5.76902"),
+			out: -5.76902,
+			err: nil,
+		},
+		{
+			in:  []byte("-5.7ff902"),
+			out: 0,
+			err: errors.New("will error"),
+		},
+	}
+	var u user
+	ass := assert.New(t)
+	for _, tc := range testData {
+		mp := map[string]interface{}{
+			"score": tc.in,
+		}
+		err := bind(mp, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.True(math.Abs(tc.out-u.Score) < 1e5)
+	}
+}
+
+func Test_uint8_2_any(t *testing.T) {
+	type user struct {
+		Name  string  `ddb:"name"`
+		Age   int     `ddb:"_age"`
+		Score float64 `ddb:"sc"`
+	}
+	var testData = []struct {
+		in  map[string]interface{}
+		out user
+		err error
+	}{
+		{
+			in: map[string]interface{}{
+				"name": []uint8("xxx"),
+				"_age": []uint8("52"),
+				"sc":   []uint8("3.7"),
+			},
+			out: user{
+				Name:  "xxx",
+				Age:   52,
+				Score: 3.7,
+			},
+			err: nil,
+		},
+		{
+			in: map[string]interface{}{
+				"name": []byte("xxx"),
+				"_age": []byte("52"),
+				"sc":   []byte("3.7"),
+			},
+			out: user{
+				Name:  "xxx",
+				Age:   52,
+				Score: 3.7,
+			},
+			err: nil,
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range testData {
+		var u user
+		err := bind(tc.in, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.Equal(tc.out, u)
 	}
 }

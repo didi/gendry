@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"strconv"
 	"time"
 
 	"fmt"
@@ -41,7 +42,7 @@ type ScanErr struct {
 }
 
 func (s ScanErr) Error() string {
-	return fmt.Sprintf("[scaner]: %s.%s is %s which is not AssignableBy %s", s.structName, s.fieldName, s.to, s.from)
+	return fmt.Sprintf("[scanner]: %s.%s is %s which is not AssignableBy %s", s.structName, s.fieldName, s.to, s.from)
 }
 
 func newScanErr(structName, fieldName string, from, to reflect.Type) ScanErr {
@@ -167,70 +168,9 @@ func bind(result map[string]interface{}, target interface{}) (resp error) {
 		if !ok {
 			continue
 		}
-		//vit: ValueI Type
-		vit := valuei.Type()
-		//mvt: MapValue Type
-		mvt := reflect.TypeOf(mapValue)
-		if nil == mvt {
-			continue
-		}
-		//[]byte tp []byte && time.Time to time.Time
-		if mvt.AssignableTo(vit) {
-			valuei.Set(reflect.ValueOf(mapValue))
-			continue
-		}
-
-		//time.Time to string
-		switch assertT := mapValue.(type) {
-		case time.Time:
-			if vit.Kind() == reflect.String {
-				sTime := assertT.Format(cTimeFormat)
-				valuei.SetString(sTime)
-				continue
-			} else {
-				return wrapErr(mvt, vit)
-			}
-		default:
-		}
-
-		//according to go-mysql-driver/mysql, driver.Value type can only be:
-		//int64 or []byte(> maxInt64)
-		//float32/float64
-		//[]byte
-		//time.Time if parseTime=true or DATE type will be converted into []byte
-		switch mvt.Kind() {
-		case reflect.Int64:
-			if isIntSeriesType(vit.Kind()) {
-				valuei.SetInt(mapValue.(int64))
-			} else if isUintSeriesType(vit.Kind()) {
-				valuei.SetUint(uint64(mapValue.(int64)))
-			} else {
-				return wrapErr(mvt, vit)
-			}
-		case reflect.Float32:
-			if isFloatSeriesType(vit.Kind()) {
-				valuei.SetFloat(float64(mapValue.(float32)))
-			} else {
-				return wrapErr(mvt, vit)
-			}
-		case reflect.Float64:
-			if isFloatSeriesType(vit.Kind()) {
-				valuei.SetFloat(mapValue.(float64))
-			} else {
-				return wrapErr(mvt, vit)
-			}
-		case reflect.Slice:
-			mapValueS, ok := mapValue.([]byte)
-			if !ok {
-				return ErrSliceToString
-			}
-			if vit.Kind() == reflect.String {
-				valuei.SetString(string(mapValueS))
-			} else {
-				return wrapErr(mvt, vit)
-			}
-		default:
-			return wrapErr(mvt, vit)
+		err := convert(mapValue, valuei, wrapErr)
+		if nil != err {
+			return err
 		}
 	}
 	return nil
@@ -291,4 +231,92 @@ func lookUpTagName(typeObj reflect.StructField) (string, bool) {
 	}
 	name = resolveTagName(name)
 	return name, ok
+}
+
+func convert(mapValue interface{}, valuei reflect.Value, wrapErr func(from, to reflect.Type) ScanErr) error {
+	//vit: ValueI Type
+	vit := valuei.Type()
+	//mvt: MapValue Type
+	mvt := reflect.TypeOf(mapValue)
+	if nil == mvt {
+		return nil
+	}
+	//[]byte tp []byte && time.Time to time.Time
+	if mvt.AssignableTo(vit) {
+		valuei.Set(reflect.ValueOf(mapValue))
+		return nil
+	}
+	//time.Time to string
+	switch assertT := mapValue.(type) {
+	case time.Time:
+		if vit.Kind() == reflect.String {
+			sTime := assertT.Format(cTimeFormat)
+			valuei.SetString(sTime)
+			return nil
+		}
+		return wrapErr(mvt, vit)
+	default:
+	}
+
+	//according to go-mysql-driver/mysql, driver.Value type can only be:
+	//int64 or []byte(> maxInt64)
+	//float32/float64
+	//[]byte
+	//time.Time if parseTime=true or DATE type will be converted into []byte
+	switch mvt.Kind() {
+	case reflect.Int64:
+		if isIntSeriesType(vit.Kind()) {
+			valuei.SetInt(mapValue.(int64))
+		} else if isUintSeriesType(vit.Kind()) {
+			valuei.SetUint(uint64(mapValue.(int64)))
+		} else {
+			return wrapErr(mvt, vit)
+		}
+	case reflect.Float32:
+		if isFloatSeriesType(vit.Kind()) {
+			valuei.SetFloat(float64(mapValue.(float32)))
+		} else {
+			return wrapErr(mvt, vit)
+		}
+	case reflect.Float64:
+		if isFloatSeriesType(vit.Kind()) {
+			valuei.SetFloat(mapValue.(float64))
+		} else {
+			return wrapErr(mvt, vit)
+		}
+	case reflect.Slice:
+		mapValueSlice, ok := mapValue.([]byte)
+		if !ok {
+			return ErrSliceToString
+		}
+		mapValueStr := string(mapValueSlice)
+		vitKind := vit.Kind()
+		switch {
+		case vitKind == reflect.String:
+			valuei.SetString(mapValueStr)
+		case isIntSeriesType(vitKind):
+			intVal, err := strconv.ParseInt(mapValueStr, 10, 64)
+			if nil != err {
+				return wrapErr(mvt, vit)
+			}
+			valuei.SetInt(intVal)
+		case isUintSeriesType(vitKind):
+			uintVal, err := strconv.ParseUint(mapValueStr, 10, 64)
+			if nil != err {
+				return wrapErr(mvt, vit)
+			}
+			valuei.SetUint(uintVal)
+		case isFloatSeriesType(vitKind):
+			floatVal, err := strconv.ParseFloat(mapValueStr, 64)
+			if nil != err {
+				return wrapErr(mvt, vit)
+			}
+			valuei.SetFloat(floatVal)
+		default:
+			return wrapErr(mvt, vit)
+		}
+	default:
+		return wrapErr(mvt, vit)
+	}
+	return nil
 }

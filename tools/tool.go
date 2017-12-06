@@ -7,9 +7,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/didichuxing/gendry/manager"
-	"github.com/didichuxing/gendry/tools/dao"
-	"github.com/didichuxing/gendry/tools/schema"
+	"github.com/didi/gendry/manager"
+	"github.com/didi/gendry/tools/dao"
+	"github.com/didi/gendry/tools/schema"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mkideal/cli"
 )
@@ -122,8 +122,8 @@ func addImport(packageName string) io.Reader {
 	import (
 		"database/sql"
 		"errors"
-		"github.com/didichuxing/gendry/builder"
-		"github.com/didichuxing/gendry/scanner"
+		"github.com/didi/gendry/builder"
+		"github.com/didi/gendry/scanner"
 	)
 
 	/*
