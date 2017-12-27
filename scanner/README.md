@@ -6,7 +6,7 @@
 import (
     "database/sql"
     "fmt"
-    "github.com/didichuxing/Gendry/scanner"
+    "github.com/didichuxing/gendry/scanner"
 )
 
 type Person struct {
