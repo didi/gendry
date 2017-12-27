@@ -11,6 +11,23 @@ import (
 	"runtime/debug"
 )
 
+//sql.Rows implement this interface
+type Rows interface {
+	Close() error
+
+	ColumnTypes() ([]*sql.ColumnType, error)
+
+	Columns() ([]string, error)
+
+	Err() error
+
+	Next() bool
+
+	NextResultSet() bool
+
+	Scan(dest ...interface{}) error
+}
+
 const (
 	// DefaultTagName is the default struct tag name
 	DefaultTagName = "ddb"
@@ -51,7 +68,7 @@ func newScanErr(structName, fieldName string, from, to reflect.Type) ScanErr {
 
 // Scan scans data from rows to target
 // Don't forget to close the rows
-func Scan(rows *sql.Rows, target interface{}) error {
+func Scan(rows Rows, target interface{}) error {
 	if reflect.TypeOf(target).Kind() != reflect.Ptr || nil == target || reflect.ValueOf(target).IsNil() {
 		return ErrTargetNotSettable
 	}
@@ -72,12 +89,12 @@ func Scan(rows *sql.Rows, target interface{}) error {
 }
 
 // ScanMap returns the result in the form of []map[string]interface{}
-func ScanMap(rows *sql.Rows) ([]map[string]interface{}, error) {
+func ScanMap(rows Rows) ([]map[string]interface{}, error) {
 	return resolveDataFromRows(rows)
 }
 
 // ScanMapClose is the same as ScanMap and close the rows
-func ScanMapClose(rows *sql.Rows) ([]map[string]interface{}, error) {
+func ScanMapClose(rows Rows) ([]map[string]interface{}, error) {
 	result, err := ScanMap(rows)
 	if nil != err {
 		return nil, err
@@ -88,7 +105,7 @@ func ScanMapClose(rows *sql.Rows) ([]map[string]interface{}, error) {
 
 // ScanClose is the same as Scan and helps you Close the rows
 // Don't exec the rows.Close after calling this
-func ScanClose(rows *sql.Rows, target interface{}) error {
+func ScanClose(rows Rows, target interface{}) error {
 	err := Scan(rows, target)
 	if nil != rows {
 		if nil == err {
@@ -188,7 +205,7 @@ func isFloatSeriesType(k reflect.Kind) bool {
 	return k == reflect.Float32 || k == reflect.Float64
 }
 
-func resolveDataFromRows(rows *sql.Rows) ([]map[string]interface{}, error) {
+func resolveDataFromRows(rows Rows) ([]map[string]interface{}, error) {
 	if nil == rows {
 		return nil, ErrNilRows
 	}
