@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"database/sql"
 	"errors"
 	"reflect"
 	"strconv"
@@ -15,15 +14,9 @@ import (
 type Rows interface {
 	Close() error
 
-	ColumnTypes() ([]*sql.ColumnType, error)
-
 	Columns() ([]string, error)
 
-	Err() error
-
 	Next() bool
-
-	NextResultSet() bool
 
 	Scan(dest ...interface{}) error
 }
