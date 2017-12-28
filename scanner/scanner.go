@@ -10,7 +10,7 @@ import (
 	"runtime/debug"
 )
 
-//sql.Rows implement this interface
+//Rows defines methods that scanner needs, which database/sql.Rows already implements
 type Rows interface {
 	Close() error
 
