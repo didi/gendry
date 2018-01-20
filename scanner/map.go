@@ -7,9 +7,12 @@ import (
 )
 
 var (
+	// ErrNoneStructTarget as its name says
 	ErrNoneStructTarget = errors.New("[scanner] target must be a struct type")
 )
 
+// Map converts a struct to a map
+// type for each field of the struct must be built-in type
 func Map(target interface{}, useTag string) (map[string]interface{}, error) {
 	if nil == target {
 		return nil, nil

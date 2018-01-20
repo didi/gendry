@@ -58,3 +58,17 @@ func TestStructWithMuiltiSubTag(t *testing.T) {
 	_, ok = mapA["cc"]
 	ass.False(ok)
 }
+
+func TestNil(t *testing.T) {
+	m, err := Map(nil, "")
+	ass := assert.New(t)
+	ass.Nil(m)
+	ass.Nil(err)
+}
+
+func TestNonStructInput(t *testing.T) {
+	ass := assert.New(t)
+	m, err := Map(10, "")
+	ass.Nil(m)
+	ass.Equal(ErrNoneStructTarget, err)
+}

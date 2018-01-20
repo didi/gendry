@@ -62,7 +62,7 @@ func newScanErr(structName, fieldName string, from, to reflect.Type) ScanErr {
 // Scan scans data from rows to target
 // Don't forget to close the rows
 func Scan(rows Rows, target interface{}) error {
-	if reflect.TypeOf(target).Kind() != reflect.Ptr || nil == target || reflect.ValueOf(target).IsNil() {
+	if nil == target || reflect.ValueOf(target).IsNil() || reflect.TypeOf(target).Kind() != reflect.Ptr {
 		return ErrTargetNotSettable
 	}
 

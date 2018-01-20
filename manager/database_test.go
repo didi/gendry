@@ -1,10 +1,11 @@
 package manager
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"time"
 	"fmt"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConcatDSN_None(t *testing.T) {
@@ -23,8 +24,16 @@ func TestConcatDSN_One(t *testing.T) {
 func TestConcatDSN_Multi(t *testing.T) {
 	var setting []Setting
 	ass := assert.New(t)
-	setting = append(setting, SetAllowAllFiles(true), SetAutoCommit(true), SetCharset("utf8"))
-	expected := "allowAllFiles=true&autocommit=true&charset=utf8"
+	setting = append(setting,
+		SetAllowAllFiles(true),
+		SetAutoCommit(true),
+		SetCharset("utf8"),
+		SetAllowNativePasswords(false),
+		SetClientFoundRows(true),
+		SetColumnsWithAlias(true),
+		SetParseTime(false),
+	)
+	expected := "allowAllFiles=true&autocommit=true&charset=utf8&allowNativePasswords=false&clientFoundRows=true&columnsWithAlias=true&parseTime=false"
 	ass.Equal(expected, concatDSN(setting), "multi dsn")
 }
 
@@ -39,7 +48,7 @@ func TestConcatDSN_Time(t *testing.T) {
 func TestConcatDSN_Time_overflow(t *testing.T) {
 	var setting []Setting
 	ass := assert.New(t)
-	setting = append(setting, SetReadTimeout(time.Microsecond), SetTimeout(24 * time.Hour))
+	setting = append(setting, SetReadTimeout(time.Microsecond), SetTimeout(24*time.Hour))
 	ass.Equal("", concatDSN(setting), "duration <1ms or >=24h should be invalid")
 }
 
@@ -61,6 +70,12 @@ func TestNew(t *testing.T) {
 	ass.Equal(user, o.user)
 	ass.Equal(password, o.password)
 	ass.Equal(host, o.host)
+	o = o.Driver("oracle")
+	ass.Equal("oracle", o.driver)
+	o = o.Port(1234)
+	ass.Equal(1234, o.port)
+	_, err := o.Open(true)
+	ass.Error(err)
 }
 
 func TestRealDSN_NoneSetting(t *testing.T) {

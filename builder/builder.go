@@ -48,7 +48,7 @@ type eleLimit struct {
 // supported operators including: =,in,>,>=,<,<=,<>,!=.
 // key without operator will be regarded as =.
 // special key begin with _: _orderby,_groupby,_limit,_having.
-// the value of _orderby must be a string seperated by a space(ie:map[string]interface{}{"_orderby": "fieldName desc"}).
+// the value of _orderby must be a string separated by a space(ie:map[string]interface{}{"_orderby": "fieldName desc"}).
 // the value of _limit must be a slice whose type should be []uint and must contain two uints(ie: []uint{0, 100}).
 // the value of _having must be a map just like where but only support =,in,>,>=,<,<=,<>,!=
 // for more examples,see README.md or open a issue.

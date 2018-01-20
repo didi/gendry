@@ -176,7 +176,7 @@ func (o *Option) Driver(driver string) *Option {
 	return o
 }
 
-//Set recieves a series of Set*-like functions
+//Set receives a series of Set*-like functions
 func (o *Option) Set(sets ...Setting) *Option {
 	o.settings = append(o.settings, sets...)
 	return o

@@ -2,6 +2,8 @@ package scanner
 
 import (
 	"errors"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"time"
@@ -533,4 +535,115 @@ func Test_uint8_2_any(t *testing.T) {
 		}
 		ass.Equal(tc.out, u)
 	}
+}
+
+func TestTagSetOnlyOnce(t *testing.T) {
+	userDefinedTagName = "a"
+	SetTagName("foo")
+	assert.Equal(t, "a", userDefinedTagName)
+	userDefinedTagName = ""
+	SetTagName("foo")
+	assert.Equal(t, "foo", userDefinedTagName)
+
+}
+
+type fakeRows struct {
+	columns []string
+	dataset [][]interface{}
+	idx     int
+}
+
+var errCloseForTest = errors.New("just for test")
+
+func (r *fakeRows) Close() error {
+	return errCloseForTest
+}
+
+func (r *fakeRows) Columns() ([]string, error) {
+	return r.columns, nil
+}
+
+func (r *fakeRows) Next() bool {
+	if r.idx < len(r.dataset) {
+		return true
+	}
+	return false
+}
+
+func (r *fakeRows) Scan(dt ...interface{}) (err error) {
+	lendt := len(dt)
+	lenfact := len(r.dataset[r.idx])
+	if lendt != lenfact {
+		return fmt.Errorf("sql: expected %d destination arguments in Scan, not %d", lenfact, lendt)
+	}
+	defer func() { r.idx++ }()
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("%v", p)
+		}
+	}()
+	for i := 0; i < lendt; i++ {
+		data := r.dataset[r.idx][i]
+		reflect.ValueOf(dt[i]).Elem().Set(reflect.ValueOf(data))
+	}
+	return nil
+}
+
+func TestScanNotSettable(t *testing.T) {
+	ass := assert.New(t)
+	err := Scan(&fakeRows{}, nil)
+	ass.Equal(ErrTargetNotSettable, err)
+	var rows Rows
+	err = Scan(rows, nil)
+	ass.Equal(ErrTargetNotSettable, err)
+}
+
+func TestScanMapClose(t *testing.T) {
+	var rows Rows
+	_, err := ScanMapClose(rows)
+	ass := assert.New(t)
+	ass.Equal(ErrNilRows, err)
+	scannn := &fakeRows{
+		columns: []string{"foo", "bar"},
+		dataset: [][]interface{}{
+			[]interface{}{1, 2},
+			[]interface{}{3, 4},
+		},
+	}
+	result, err := ScanMapClose(scannn)
+	ass.Equal(2, len(result))
+	ass.Equal(errCloseForTest, err)
+	v, ok := result[0]["foo"]
+	if !ass.True(ok) {
+		return
+	}
+	ass.Equal(1, v)
+	v, ok = result[1]["bar"]
+	if !ass.True(ok) {
+		return
+	}
+	ass.Equal(4, v)
+}
+
+func TestScanMock(t *testing.T) {
+	ass := assert.New(t)
+	scannn := &fakeRows{
+		columns: []string{"name", "age"},
+		dataset: [][]interface{}{
+			[]interface{}{"deen", 23},
+			[]interface{}{"caibirdme", 24},
+		},
+	}
+	type curdBoy struct {
+		Name string `ddb:"name"`
+		Age  int    `ddb:"age"`
+	}
+	var boys []curdBoy
+	userDefinedTagName = "ddb"
+	err := Scan(scannn, &boys)
+	ass.NoError(err)
+	ass.Equal("deen", boys[0].Name)
+	ass.Equal("caibirdme", boys[1].Name)
+	ass.Equal(23, boys[0].Age)
+	ass.Equal(24, boys[1].Age)
 }
