@@ -196,7 +196,7 @@ cond, vals, err := builder.NamedQuery("select * from tb where name={{name}} and 
 })
 
 assert.Equal("select * from tb where name=? and id in (select uid from anothertable where score in (?,?,?))", cond)
-assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9})
+assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9}, vals)
 ```
 
 #### `BuildDelete`

@@ -86,7 +86,7 @@ cond, vals, err := builder.NamedQuery("select * from tb where name={{name}} and 
 })
 
 assert.Equal("select * from tb where name=? and id in (select uid from anothertable where score in (?,?,?))", cond)
-assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9})
+assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9}, vals)
 ```
 slice类型的值会根据slice的长度自动展开  
 这种方式基本上就是手写sql，非常便于DBA review同时也方便开发者进行复杂sql的调优  
