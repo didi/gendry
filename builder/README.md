@@ -182,6 +182,23 @@ cond, vals, err := qb.BuildInsert(table, data)
 db.Exec(cond, vals...)
 ```
 
+#### `NamedQuery`
+
+sign: `func NamedQuery(sql string, data map[string]interface{}) (string, []interface{}, error)`
+
+For very complex query, this might be helpful. And for critical system, this is recommended.
+
+
+```go
+cond, vals, err := builder.NamedQuery("select * from tb where name={{name}} and id in (select uid from anothertable where score in {{m_score}})", map[string]interface{}{
+	"name": "caibirdme",
+	"m_score": []float64{3.0, 5.8, 7.9},
+})
+
+assert.Equal("select * from tb where name=? and id in (select uid from anothertable where score in (?,?,?))", cond)
+assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9})
+```
+
 #### `BuildDelete`
 
 sign: `BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error)`

@@ -84,7 +84,20 @@ result,err = AggregateQuery(ctx, db, "tableName", where, AggregateAvg("score"))
 averageScore := result.Float64()
 ```
 
-sqls with join or subquery always need pay more attention to optimize and so,they're **not** supported yet.For more detail, see [builder's doc](builder/README.md) or just use `godoc`
+For complex queries, `NamedQuery` may be helpful:
+```go
+cond, vals, err := builder.NamedQuery("select * from tb where name={{name}} and id in (select uid from anothertable where score in {{m_score}})", map[string]interface{}{
+	"name": "caibirdme",
+	"m_score": []float64{3.0, 5.8, 7.9},
+})
+
+assert.Equal("select * from tb where name=? and id in (select uid from anothertable where score in (?,?,?))", cond)
+assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9})
+```
+slice type can be expanded automatically according to its length, thus these sqls are very convenient for DBA to review.  
+**For critical system, this is recommended**
+
+For more detail, see [builder's doc](builder/README.md) or just use `godoc`
 
 <h3 id="scanner">Scanner</h3>
 For each response from mysql,you want to map it with your well-defined structure.
@@ -154,5 +167,9 @@ PS：
 * The second parameter of Scan must be a reference
 
 <h3 id="tools">Tools</h3>
-Besides APIs above, Gendry provide a CLI tool to help generating codes. For more detail, see [gforge](https://github.com/caibirdme/gforge)
+Besides APIs above, Gendry provide a [CLI tool](https://github.com/caibirdme/gforge) to help generating codes.
+
+
+
+
 

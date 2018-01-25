@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -399,5 +400,109 @@ func TestLike(t *testing.T) {
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
+	}
+}
+
+func TestNamedQuery(t *testing.T) {
+	var testData = []struct {
+		sql  string
+		data map[string]interface{}
+		cond string
+		vals []interface{}
+		err  error
+	}{
+		{
+			sql: `select * from tb where name={{name}}`,
+			data: map[string]interface{}{
+				"age": 24,
+			},
+			cond: "",
+			vals: nil,
+			err:  errors.New("name not found"),
+		},
+		{
+			sql:  `select * from tb where name=hello`,
+			data: nil,
+			cond: "select * from tb where name=hello",
+			vals: nil,
+			err:  nil,
+		},
+		{
+			sql: `select * from tb where name={{name}} and age<{{age}}`,
+			data: map[string]interface{}{
+				"age": 24,
+			},
+			cond: "",
+			vals: nil,
+			err:  errors.New("name not found"),
+		},
+		{
+			sql: `select * from tb where name={{name}} and age<>{{age}}`,
+			data: map[string]interface{}{
+				"name": "caibirdme",
+				"age":  24,
+			},
+			cond: `select * from tb where name=? and age<>?`,
+			vals: []interface{}{"caibirdme", 24},
+			err:  nil,
+		},
+		{
+			sql: `select * from tb where name={{name}} and age in {{age}}`,
+			data: map[string]interface{}{
+				"name": "caibirdme",
+				"age":  []int{1, 2, 3},
+			},
+			cond: `select * from tb where name=? and age in (?,?,?)`,
+			vals: []interface{}{"caibirdme", 1, 2, 3},
+			err:  nil,
+		},
+		{
+			sql: `select * from tb where name={{name}} and age in (select m_age from anothertb where m_age>{{m_age}})`,
+			data: map[string]interface{}{
+				"name":  "caibirdme",
+				"m_age": 88.9,
+			},
+			cond: `select * from tb where name=? and age in (select m_age from anothertb where m_age>?)`,
+			vals: []interface{}{"caibirdme", 88.9},
+			err:  nil,
+		},
+		{
+			sql: `select * from tb where age in {{some}} and other in {{some}}`,
+			data: map[string]interface{}{
+				"some": []float64{24.0, 28.7},
+			},
+			cond: "select * from tb where age in (?,?) and other in (?,?)",
+			vals: []interface{}{24.0, 28.7, 24.0, 28.7},
+			err:  nil,
+		},
+		{
+			sql: `select a.name,a.age from tb1 as a join tb2 as b on a.id=b.id where a.age>{{age}} and b.age<{{foo}} order by a.name desc limit {{limit}}`,
+			data: map[string]interface{}{
+				"age":   20,
+				"foo":   30,
+				"limit": 40,
+			},
+			cond: "select a.name,a.age from tb1 as a join tb2 as b on a.id=b.id where a.age>? and b.age<? order by a.name desc limit ?",
+			vals: []interface{}{20, 30, 40},
+			err:  nil,
+		},
+		{
+			sql: `select * from tb where age in {{age}}`,
+			data: map[string]interface{}{
+				"age": []int{1},
+			},
+			cond: `select * from tb where age in (?)`,
+			vals: []interface{}{1},
+			err:  nil,
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range testData {
+		cond, vals, err := NamedQuery(tc.sql, tc.data)
+		if !ass.Equal(tc.err, err) {
+			return
+		}
+		ass.Equal(tc.cond, cond)
+		ass.Equal(tc.vals, vals)
 	}
 }
