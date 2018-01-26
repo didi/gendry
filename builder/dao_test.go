@@ -39,8 +39,8 @@ func TestIn(t *testing.T) {
 	}{
 		{
 			in: map[string][]interface{}{
-				"foo": []interface{}{"bar", "baz"},
-				"age": []interface{}{5, 7, 9, 11},
+				"foo": {"bar", "baz"},
+				"age": {5, 7, 9, 11},
 			},
 			outCond: []string{"age IN (?,?,?,?)", "foo IN (?,?)"},
 			outVals: []interface{}{5, 7, 9, 11, "bar", "baz"},
@@ -152,7 +152,7 @@ func TestWhereConnector(t *testing.T) {
 					"sex": "male",
 				}),
 				In(map[string][]interface{}{
-					"qq": []interface{}{7, 8, 9},
+					"qq": {7, 8, 9},
 				}),
 			},
 			outStr:  "(a=? AND b=? AND foo!=? AND sex!=? AND qq IN (?,?,?))",
@@ -178,15 +178,15 @@ func TestBuildInsert(t *testing.T) {
 		{
 			table: "tb1",
 			data: []map[string]interface{}{
-				map[string]interface{}{
+				{
 					"foo": 1,
 					"bar": 2,
 				},
-				map[string]interface{}{
+				{
 					"foo": 3,
 					"bar": 4,
 				},
-				map[string]interface{}{
+				{
 					"foo": 5,
 					"bar": 6,
 				},
@@ -292,7 +292,7 @@ func TestBuildSelect(t *testing.T) {
 					"bar": 2,
 				}),
 				In(map[string][]interface{}{
-					"qq": []interface{}{4, 5, 6},
+					"qq": {4, 5, 6},
 				}),
 			},
 			groupBy: "",

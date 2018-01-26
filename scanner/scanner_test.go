@@ -261,11 +261,11 @@ func Test_ScanMap(t *testing.T) {
 		{
 			rows: sqlmock.NewRows([]string{"foo", "bar"}).AddRow(int64(1), int64(5)).AddRow(int64(3), int64(7)),
 			out: []map[string]interface{}{
-				map[string]interface{}{
+				{
 					"foo": int64(1),
 					"bar": int64(5),
 				},
-				map[string]interface{}{
+				{
 					"foo": int64(3),
 					"bar": int64(7),
 				},
@@ -274,11 +274,11 @@ func Test_ScanMap(t *testing.T) {
 		{
 			rows: sqlmock.NewRows([]string{"foo", "bar"}).AddRow(int64(1), 10.8).AddRow(int64(3), 20.7),
 			out: []map[string]interface{}{
-				map[string]interface{}{
+				{
 					"foo": int64(1),
 					"bar": 10.8,
 				},
-				map[string]interface{}{
+				{
 					"foo": int64(3),
 					"bar": 20.7,
 				},
@@ -287,11 +287,11 @@ func Test_ScanMap(t *testing.T) {
 		{
 			rows: sqlmock.NewRows([]string{"foo", "bar"}).AddRow("hello world", 10.8).AddRow("writing test is boring but can make your code more robust", 20.7),
 			out: []map[string]interface{}{
-				map[string]interface{}{
+				{
 					"foo": "hello world",
 					"bar": 10.8,
 				},
-				map[string]interface{}{
+				{
 					"foo": "writing test is boring but can make your code more robust",
 					"bar": 20.7,
 				},
@@ -564,10 +564,7 @@ func (r *fakeRows) Columns() ([]string, error) {
 }
 
 func (r *fakeRows) Next() bool {
-	if r.idx < len(r.dataset) {
-		return true
-	}
-	return false
+	return r.idx < len(r.dataset)
 }
 
 func (r *fakeRows) Scan(dt ...interface{}) (err error) {
@@ -606,8 +603,8 @@ func TestScanMapClose(t *testing.T) {
 	scannn := &fakeRows{
 		columns: []string{"foo", "bar"},
 		dataset: [][]interface{}{
-			[]interface{}{1, 2},
-			[]interface{}{3, 4},
+			{1, 2},
+			{3, 4},
 		},
 	}
 	result, err := ScanMapClose(scannn)
@@ -630,8 +627,8 @@ func TestScanMock(t *testing.T) {
 	scannn := &fakeRows{
 		columns: []string{"name", "age"},
 		dataset: [][]interface{}{
-			[]interface{}{"deen", 23},
-			[]interface{}{"caibirdme", 24},
+			{"deen", 23},
+			{"caibirdme", 24},
 		},
 	}
 	type curdBoy struct {

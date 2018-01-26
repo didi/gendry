@@ -120,7 +120,7 @@ func Test_BuildInsert(t *testing.T) {
 			in: inStruct{
 				table: "tb",
 				setData: []map[string]interface{}{
-					map[string]interface{}{
+					{
 						"foo": "bar",
 						"age": 23,
 					},

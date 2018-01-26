@@ -259,13 +259,7 @@ func convert(mapValue interface{}, valuei reflect.Value, wrapErr func(from, to r
 	//time.Time to string
 	switch assertT := mapValue.(type) {
 	case time.Time:
-		if vit.Kind() == reflect.String {
-			sTime := assertT.Format(cTimeFormat)
-			valuei.SetString(sTime)
-			return nil
-		}
-		return wrapErr(mvt, vit)
-	default:
+		return handleConvertTime(assertT, mvt, vit, &valuei, wrapErr)
 	}
 
 	//according to go-mysql-driver/mysql, driver.Value type can only be:
@@ -295,38 +289,52 @@ func convert(mapValue interface{}, valuei reflect.Value, wrapErr func(from, to r
 			return wrapErr(mvt, vit)
 		}
 	case reflect.Slice:
-		mapValueSlice, ok := mapValue.([]byte)
-		if !ok {
-			return ErrSliceToString
-		}
-		mapValueStr := string(mapValueSlice)
-		vitKind := vit.Kind()
-		switch {
-		case vitKind == reflect.String:
-			valuei.SetString(mapValueStr)
-		case isIntSeriesType(vitKind):
-			intVal, err := strconv.ParseInt(mapValueStr, 10, 64)
-			if nil != err {
-				return wrapErr(mvt, vit)
-			}
-			valuei.SetInt(intVal)
-		case isUintSeriesType(vitKind):
-			uintVal, err := strconv.ParseUint(mapValueStr, 10, 64)
-			if nil != err {
-				return wrapErr(mvt, vit)
-			}
-			valuei.SetUint(uintVal)
-		case isFloatSeriesType(vitKind):
-			floatVal, err := strconv.ParseFloat(mapValueStr, 64)
-			if nil != err {
-				return wrapErr(mvt, vit)
-			}
-			valuei.SetFloat(floatVal)
-		default:
-			return wrapErr(mvt, vit)
-		}
+		return handleConvertSlice(mapValue, mvt, vit, &valuei, wrapErr)
 	default:
 		return wrapErr(mvt, vit)
 	}
 	return nil
+}
+
+func handleConvertSlice(mapValue interface{}, mvt, vit reflect.Type, valuei *reflect.Value, wrapErr func(from, to reflect.Type) ScanErr) error {
+	mapValueSlice, ok := mapValue.([]byte)
+	if !ok {
+		return ErrSliceToString
+	}
+	mapValueStr := string(mapValueSlice)
+	vitKind := vit.Kind()
+	switch {
+	case vitKind == reflect.String:
+		valuei.SetString(mapValueStr)
+	case isIntSeriesType(vitKind):
+		intVal, err := strconv.ParseInt(mapValueStr, 10, 64)
+		if nil != err {
+			return wrapErr(mvt, vit)
+		}
+		valuei.SetInt(intVal)
+	case isUintSeriesType(vitKind):
+		uintVal, err := strconv.ParseUint(mapValueStr, 10, 64)
+		if nil != err {
+			return wrapErr(mvt, vit)
+		}
+		valuei.SetUint(uintVal)
+	case isFloatSeriesType(vitKind):
+		floatVal, err := strconv.ParseFloat(mapValueStr, 64)
+		if nil != err {
+			return wrapErr(mvt, vit)
+		}
+		valuei.SetFloat(floatVal)
+	default:
+		return wrapErr(mvt, vit)
+	}
+	return nil
+}
+
+func handleConvertTime(assertT time.Time, mvt, vit reflect.Type, valuei *reflect.Value, wrapErr func(from, to reflect.Type) ScanErr) error {
+	if vit.Kind() == reflect.String {
+		sTime := assertT.Format(cTimeFormat)
+		valuei.SetString(sTime)
+		return nil
+	}
+	return wrapErr(mvt, vit)
 }
