@@ -58,7 +58,7 @@ where := map[string]interface{}{
 	"score": 5,
 	"age >": 35,
 	"_orderby": "bonus desc",
-	"_grouoby": "department",
+	"_groupby": "department",
 }
 table := "some_table"
 selectFields := []string{"name", "age", "sex"}
