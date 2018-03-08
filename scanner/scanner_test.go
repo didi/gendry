@@ -644,3 +644,20 @@ func TestScanMock(t *testing.T) {
 	ass.Equal(23, boys[0].Age)
 	ass.Equal(24, boys[1].Age)
 }
+
+func TestScanEmpty(t *testing.T) {
+	ass := assert.New(t)
+	scannn := &fakeRows{}
+	type curdBoy struct {
+		Name string `ddb:"name"`
+		Age  int    `ddb:"age"`
+	}
+	var boys []curdBoy
+	userDefinedTagName = "ddb"
+	err := Scan(scannn, &boys)
+	ass.NoError(err)
+	ass.Equal(0, len(boys))
+	var boy curdBoy
+	err = Scan(scannn, &boy)
+	ass.Equal(ErrEmptyResult, err)
+}

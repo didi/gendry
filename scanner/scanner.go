@@ -35,6 +35,8 @@ var (
 	ErrNilRows = errors.New("[scanner]: rows can't be nil")
 	//ErrSliceToString means only []uint8 can be transmuted into string
 	ErrSliceToString = errors.New("[scanner]: can't transmute a non-uint8 slice to string")
+	//ErrEmptyResult occurs when target of Scan isn't slice and the result of the query is empty
+	ErrEmptyResult = errors.New(`[scanner]: empty result`)
 )
 
 //SetTagName can be set only once
@@ -61,20 +63,28 @@ func newScanErr(structName, fieldName string, from, to reflect.Type) ScanErr {
 
 // Scan scans data from rows to target
 // Don't forget to close the rows
+// When the target is not a pointer of slice, ErrEmptyResult
+// may be returned if the query result is empty
 func Scan(rows Rows, target interface{}) error {
 	if nil == target || reflect.ValueOf(target).IsNil() || reflect.TypeOf(target).Kind() != reflect.Ptr {
 		return ErrTargetNotSettable
 	}
 
 	data, err := resolveDataFromRows(rows)
-	if nil != err || nil == data {
+	if nil != err {
 		return err
 	}
 
 	switch reflect.TypeOf(target).Elem().Kind() {
 	case reflect.Slice:
+		if nil == data {
+			return nil
+		}
 		err = bindSlice(data, target)
 	default:
+		if nil == data {
+			return ErrEmptyResult
+		}
 		err = bind(data[0], target)
 	}
 
