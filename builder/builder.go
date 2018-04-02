@@ -299,7 +299,7 @@ func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
 func convertWhereMapToWhereMapSlice(where map[string]interface{}) (map[string][]interface{}, error) {
 	result := make(map[string][]interface{})
 	for key, val := range where {
-		vals, ok := val.([]interface{})
+		vals, ok := convertInterfaceToMap(val)
 		if !ok {
 			return nil, errWhereInType
 		}
@@ -309,6 +309,18 @@ func convertWhereMapToWhereMapSlice(where map[string]interface{}) (map[string][]
 		result[key] = vals
 	}
 	return result, nil
+}
+
+func convertInterfaceToMap(val interface{}) ([]interface{}, bool) {
+	s := reflect.ValueOf(val)
+	if s.Kind() != reflect.Slice {
+		return nil, false
+	}
+	interfaceSlice := make([]interface{}, s.Len())
+	for i := 0; i < s.Len(); i++ {
+		interfaceSlice[i] = s.Index(i).Interface()
+	}
+	return interfaceSlice, true
 }
 
 func splitKey(key string) (field string, operator string, err error) {

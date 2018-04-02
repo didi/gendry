@@ -506,3 +506,56 @@ func TestNamedQuery(t *testing.T) {
 		ass.Equal(tc.vals, vals)
 	}
 }
+
+func Test_BuildIN(t *testing.T) {
+	type inStruct struct {
+		table  string
+		where  map[string]interface{}
+		fields []string
+	}
+	type outStruct struct {
+		cond string
+		vals []interface{}
+		err  error
+	}
+	var data = []struct {
+		in  inStruct
+		out outStruct
+	}{
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"qq":       "tt",
+					"age in":   []int{1, 3, 5, 7, 9},
+					"faith <>": "Muslim",
+					"_orderby": "age desc",
+					"_groupby": "department",
+				},
+				fields: []string{"id", "name", "age"},
+			},
+			out: outStruct{
+				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC",
+				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim"},
+				err:  nil,
+			},
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range data {
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		ass.Equal(tc.out.err, err)
+		ass.Equal(tc.out.cond, cond)
+		ass.Equal(tc.out.vals, vals)
+	}
+}
+
+func Benchmark_BuildIN(b *testing.B) {
+	where := map[string]interface{}{
+		"age": []uint64{1, 3, 5, 7, 9},
+	}
+	for i := 0; i < b.N; i++ {
+		convertWhereMapToWhereMapSlice(where)
+	}
+}
