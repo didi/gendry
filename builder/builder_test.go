@@ -585,7 +585,7 @@ func Test_BuildOrderBy(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC, id ASC",
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
 				vals: []interface{}{"bar"},
 				err:  nil,
 			},

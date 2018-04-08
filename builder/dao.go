@@ -160,7 +160,7 @@ func orderBy(orderMap []eleOrderBy) (string, error) {
 		order := fmt.Sprintf("%s %s", quoteField(orderInfo.field), realOrder)
 		orders = append(orders, order)
 	}
-	orderby := strings.Join(orders, ", ")
+	orderby := strings.Join(orders, ",")
 	return orderby, nil
 }
 
