@@ -559,3 +559,43 @@ func Benchmark_BuildIN(b *testing.B) {
 		convertWhereMapToWhereMapSlice(where)
 	}
 }
+
+func Test_BuildOrderBy(t *testing.T) {
+	type inStruct struct {
+		table  string
+		where  map[string]interface{}
+		fields []string
+	}
+	type outStruct struct {
+		cond string
+		vals []interface{}
+		err  error
+	}
+	var data = []struct {
+		in  inStruct
+		out outStruct
+	}{
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"_orderby": "age desc, id asc",
+				},
+				fields: []string{"id", "name", "age"},
+			},
+			out: outStruct{
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
+				vals: []interface{}{"bar"},
+				err:  nil,
+			},
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range data {
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		ass.Equal(tc.out.err, err)
+		ass.Equal(tc.out.cond, cond)
+		ass.Equal(tc.out.vals, vals)
+	}
+}

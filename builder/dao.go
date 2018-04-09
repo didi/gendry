@@ -150,12 +150,18 @@ func assembleExpression(field, op string) string {
 	return quoteField(field) + op + "?"
 }
 
-func orderBy(field, order string) (string, error) {
-	realOrder := strings.ToUpper(order)
-	if realOrder != "ASC" && realOrder != "DESC" {
-		return "", errOrderByParam
+func orderBy(orderMap []eleOrderBy) (string, error) {
+	var orders []string
+	for _, orderInfo := range orderMap {
+		realOrder := strings.ToUpper(orderInfo.order)
+		if realOrder != "ASC" && realOrder != "DESC" {
+			return "", errOrderByParam
+		}
+		order := fmt.Sprintf("%s %s", quoteField(orderInfo.field), realOrder)
+		orders = append(orders, order)
 	}
-	return fmt.Sprintf("%s %s", quoteField(field), realOrder), nil
+	orderby := strings.Join(orders, ",")
+	return orderby, nil
 }
 
 func resolveKV(m map[string]interface{}) (keys []string, vals []interface{}) {
@@ -270,7 +276,7 @@ func splitCondition(conditions []Comparable) ([]Comparable, []Comparable) {
 	return conditions, nil
 }
 
-func buildSelect(table string, ufields []string, groupBy string, uOrderBy *eleOrderBy, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
+func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleOrderBy, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
 	format := "SELECT %s FROM %s"
 	fields := "*"
 	if len(ufields) > 0 {
@@ -293,8 +299,8 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy *eleOr
 		cond = fmt.Sprintf("%s HAVING %s", cond, havingString)
 		vals = append(vals, havingVals...)
 	}
-	if nil != uOrderBy {
-		str, err := orderBy(uOrderBy.field, uOrderBy.order)
+	if len(uOrderBy) != 0 {
+		str, err := orderBy(uOrderBy)
 		if nil != err {
 			return "", nil, err
 		}

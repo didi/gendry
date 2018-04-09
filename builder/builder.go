@@ -56,21 +56,18 @@ type eleLimit struct {
 // the value of _having must be a map just like where but only support =,in,>,>=,<,<=,<>,!=
 // for more examples,see README.md or open a issue.
 func BuildSelect(table string, where map[string]interface{}, selectField []string) (cond string, vals []interface{}, err error) {
-	var orderBy *eleOrderBy
+	var orderBy []eleOrderBy
 	var limit *eleLimit
 	var groupBy string
 	var having map[string]interface{}
 	copiedWhere := copyWhere(where)
 	if val, ok := copiedWhere["_orderby"]; ok {
-		f, order, e := splitOrderBy(val.(string))
+		eleOrderBy, e := splitOrderBy(val.(string))
 		if e != nil {
 			err = e
 			return
 		}
-		orderBy = &eleOrderBy{
-			field: f,
-			order: order,
-		}
+		orderBy = eleOrderBy
 		delete(copiedWhere, "_orderby")
 	}
 	if val, ok := copiedWhere["_groupby"]; ok {
@@ -340,16 +337,24 @@ func splitKey(key string) (field string, operator string, err error) {
 	return
 }
 
-func splitOrderBy(orderby string) (field, direction string, err error) {
-	orderby = strings.Trim(orderby, " ")
-	idx := strings.IndexByte(orderby, ' ')
-	if idx == -1 {
-		err = errSplitOrderBy
-		return
+func splitOrderBy(orderby string) ([]eleOrderBy, error) {
+	var err error
+	var eleOrder []eleOrderBy
+	for _, val := range strings.Split(orderby, ",") {
+		val = strings.Trim(val, " ")
+		idx := strings.IndexByte(val, ' ')
+		if idx == -1 {
+			err = errSplitOrderBy
+			return eleOrder, err
+		}
+		field := val[:idx]
+		direction := strings.Trim(val[idx+1:], " ")
+		eleOrder = append(eleOrder, eleOrderBy{
+			field: field,
+			order: direction,
+		})
 	}
-	field = orderby[:idx]
-	direction = strings.Trim(orderby[idx+1:], " ")
-	return
+	return eleOrder, err
 }
 
 const (
