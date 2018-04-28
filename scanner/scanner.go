@@ -10,6 +10,10 @@ import (
 	"runtime/debug"
 )
 
+type UnmarshalBinary interface {
+	UnmarshalDB(data []byte) error
+}
+
 //Rows defines methods that scanner needs, which database/sql.Rows already implements
 type Rows interface {
 	Close() error
@@ -335,7 +339,36 @@ func handleConvertSlice(mapValue interface{}, mvt, vit reflect.Type, valuei *ref
 		}
 		valuei.SetFloat(floatVal)
 	default:
-		return wrapErr(mvt, vit)
+		m := valuei.MethodByName("UnmarshalDB")
+
+		if m.IsValid() {
+			if len(mapValueStr) > 0 {
+				var setEle reflect.Value
+				if valuei.Type().Kind() == reflect.Ptr {
+					setEle = reflect.New(valuei.Type().Elem())
+				} else {
+					setEle = reflect.New(valuei.Type())
+				}
+
+				nm := setEle.MethodByName("UnmarshalDB")
+
+				vals := nm.Call([]reflect.Value{
+					reflect.ValueOf(mapValueSlice),
+				})
+
+				if len(vals) > 0 {
+					errVal := vals[0]
+					if !errVal.IsNil() {
+						return wrapErr(mvt, vit)
+					} else {
+						valuei.Set(setEle)
+					}
+				}
+			}
+
+		} else {
+			return wrapErr(mvt, vit)
+		}
 	}
 	return nil
 }
