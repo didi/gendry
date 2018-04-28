@@ -10,8 +10,16 @@ import (
 	"runtime/debug"
 )
 
-type UnmarshalBinary interface {
-	UnmarshalDB(data []byte) error
+// ByteUnmarshaler is the interface implemented by types
+// that can unmarshal a JSON description of themselves.
+// The input can be assumed to be a valid encoding of
+// a JSON value. UnmarshalByte must copy the JSON data
+// if it wishes to retain the data after returning.
+//
+// By convention, to approximate the behavior of Unmarshal itself,
+// ByteUnmarshaler implement UnmarshalByte([]byte("null")) as a no-op.
+type ByteUnmarshaler interface {
+	UnmarshalByte(data []byte) error
 }
 
 //Rows defines methods that scanner needs, which database/sql.Rows already implements
@@ -339,33 +347,24 @@ func handleConvertSlice(mapValue interface{}, mvt, vit reflect.Type, valuei *ref
 		}
 		valuei.SetFloat(floatVal)
 	default:
-		m := valuei.MethodByName("UnmarshalDB")
-
-		if m.IsValid() {
-			if len(mapValueStr) > 0 {
-				var setEle reflect.Value
-				if valuei.Type().Kind() == reflect.Ptr {
-					setEle = reflect.New(valuei.Type().Elem())
-				} else {
-					setEle = reflect.New(valuei.Type())
-				}
-
-				nm := setEle.MethodByName("UnmarshalDB")
-
-				vals := nm.Call([]reflect.Value{
-					reflect.ValueOf(mapValueSlice),
-				})
-
-				if len(vals) > 0 {
-					errVal := vals[0]
-					if !errVal.IsNil() {
-						return wrapErr(mvt, vit)
-					} else {
-						valuei.Set(setEle)
-					}
-				}
+		if _, ok := valuei.Interface().(ByteUnmarshaler); ok {
+			var pt reflect.Value
+			initFlag := false
+			// init pointer
+			if valuei.IsNil() {
+				pt = reflect.New(valuei.Type().Elem())
+				initFlag = true
+			} else {
+				pt = *valuei
 			}
-
+			err := pt.Interface().(ByteUnmarshaler).UnmarshalByte(mapValueSlice)
+			if nil != err {
+				structName := pt.Elem().Type().Name()
+				return fmt.Errorf("[scanner]: %s.UnmarshalByte fail to unmarshal the bytes, err: %s", structName, err)
+			}
+			if initFlag {
+				valuei.Set(pt)
+			}
 		} else {
 			return wrapErr(mvt, vit)
 		}

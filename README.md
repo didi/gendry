@@ -136,6 +136,35 @@ var students []Person
 
 scanner.Scan(rows, &students)
 ```
+Types which implement the interface
+```go
+type ByteUnmarshaler interface {
+	UnmarshalByte(data []byte) error
+}
+```
+will take over the corresponding unmarshal work.
+
+```go
+type human struct {
+	Age   int       `ddb:"ag"`
+	Extra extraInfo `ddb:"ext"`
+}
+
+type extraInfo struct {
+	Hobbies     []string `json:"hobbies"`
+	LuckyNumber int      `json:"ln"`
+}
+
+func (ext *extraInfo) UnmarshalDB(data []byte) error {
+	return json.Unmarshal(data, ext)
+}
+
+//if the type of ext column in a table is varchar(stored legal json string) or json(mysql5.7)
+var student human
+err := scanner.Scan(rows, &student)
+// ...
+```
+
 The extra tag of the struct will be used by scanner resolve data from response.The default tag name is `ddb:"tagname"`,but you can specify your own such as:
 
 ``` go

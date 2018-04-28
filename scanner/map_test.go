@@ -14,7 +14,7 @@ type person struct {
 }
 
 func TestMap(t *testing.T) {
-	var q int = 5
+	var q = 5
 	p := &q
 	a := person{"deen", 22, 1, p}
 
@@ -31,7 +31,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestStructWithPointer(t *testing.T) {
-	var q int = 5
+	var q = 5
 	p := &q
 	b := &person{"caibirdme", 23, 1, p}
 	c := &b
@@ -43,7 +43,7 @@ func TestStructWithPointer(t *testing.T) {
 }
 
 func TestStructWithMuiltiSubTag(t *testing.T) {
-	var q int = 5
+	var q = 5
 	p := &q
 	a := person{"deen", 22, 1, p}
 

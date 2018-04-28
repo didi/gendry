@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -660,4 +661,86 @@ func TestScanEmpty(t *testing.T) {
 	var boy curdBoy
 	err = Scan(scannn, &boy)
 	ass.Equal(ErrEmptyResult, err)
+}
+
+type human struct {
+	Age   int        `ddb:"ag"`
+	Extra *extraInfo `ddb:"ext"`
+}
+
+type extraInfo struct {
+	Hobbies     []string `json:"hobbies"`
+	LuckyNumber int      `json:"ln"`
+}
+
+func (ext *extraInfo) UnmarshalByte(data []byte) error {
+	return json.Unmarshal(data, ext)
+}
+
+func TestUnmarshalByte(t *testing.T) {
+	var testCase = []struct {
+		mapv   map[string]interface{}
+		expect human
+		err    error
+	}{
+		{
+			mapv: map[string]interface{}{
+				"ag":  20,
+				"ext": []byte(`{"ln":18, "hobbies": ["soccer", "swimming", "jogging"]}`),
+			},
+			expect: human{
+				Age: 20,
+				Extra: &extraInfo{
+					LuckyNumber: 18,
+					Hobbies:     []string{"soccer", "swimming", "jogging"},
+				},
+			},
+			err: nil,
+		},
+		{
+			mapv: map[string]interface{}{
+				"ag":  20,
+				"ext": []byte(`{"ln":18, illegalJSON, "hobbies": ["soccer", "swimming", "jogging"]}`),
+			},
+			expect: human{
+				Age: 20,
+			},
+			err: errors.New("[scanner]: extraInfo.UnmarshalByte fail to unmarshal the bytes, err: invalid character 'i' looking for beginning of object key string"),
+		},
+		{
+			mapv: map[string]interface{}{
+				"ag":  20,
+				"ext": []byte(`{"ln":18, "hobbies": ["soccer", "swimming", "jogging"]}`),
+			},
+			expect: human{
+				Age: 20,
+				Extra: &extraInfo{
+					LuckyNumber: 18,
+					Hobbies:     []string{"soccer", "swimming", "jogging"},
+				},
+			},
+			err: nil,
+		},
+		{
+			mapv: map[string]interface{}{
+				"ag":  20,
+				"ext": []byte("null"),
+			},
+			expect: human{
+				Age:   20,
+				Extra: &extraInfo{},
+			},
+			err: nil,
+		},
+	}
+	ass := assert.New(t)
+	for idx, tc := range testCase {
+		var student human
+		if idx >= 2 {
+			student.Extra = &extraInfo{}
+		}
+		err := bind(tc.mapv, &student)
+		ass.Equal(tc.err, err, "idx:%d", idx)
+		ass.Equal(tc.expect, student, "idx:%d", idx)
+	}
 }
