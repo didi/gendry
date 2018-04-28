@@ -147,7 +147,7 @@ will take over the corresponding unmarshal work.
 ```go
 type human struct {
 	Age   int       `ddb:"ag"`
-	Extra extraInfo `ddb:"ext"`
+	Extra *extraInfo `ddb:"ext"`
 }
 
 type extraInfo struct {
