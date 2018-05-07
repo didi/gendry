@@ -96,6 +96,16 @@ assert.Equal("select * from tb where name=? and id in (select uid from anotherta
 assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9}, vals)
 ```
 slice type can be expanded automatically according to its length, thus these sqls are very convenient for DBA to review.  
+
+For complex dynamic queries, `DynQuery` may be helpful:
+```go
+sql := builder.DynQuery("select * from tb where name={{name}} and id in (select uid from anothertable where score in {{m_score|safes}}){{ if .ds|safes }}{{ end }}", map[string]interface{}{
+	"name": "caibirdme",
+	"m_score": []float64{3.0, 5.8, 7.9},
+})
+db.Query(sql)
+```
+
 **For critical system, this is recommended**
 
 For more detail, see [builder's doc](builder/README.md) or just use `godoc`
