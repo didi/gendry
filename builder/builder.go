@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"html/template"
 	"reflect"
 	"regexp"
 	"strings"
 	"sync"
+	"text/template"
 )
 
 var (
@@ -400,11 +400,7 @@ func NamedQuery(sql string, data map[string]interface{}) (string, []interface{},
 func DynQuery(sql string, data map[string]interface{}) string {
 	cond := convertMapSlice(data)
 	var rs bytes.Buffer
-	t := template.Must(template.New("sql").Funcs(template.FuncMap{
-		"safes": func(s interface{}) template.HTML {
-			return template.HTML(fmt.Sprint(s))
-		},
-	}).Parse(sql))
+	t := template.Must(template.New("sql").Parse(sql))
 	t.Execute(&rs, cond)
 	return rs.String()
 }

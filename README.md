@@ -99,12 +99,13 @@ slice type can be expanded automatically according to its length, thus these sql
 
 For complex dynamic queries, `DynQuery` may be helpful:
 ```go
-sql := builder.DynQuery("select * from tb where name={{name}} and id in (select uid from anothertable where score in {{m_score|safes}}){{ if .ds|safes }}{{ end }}", map[string]interface{}{
+sql := builder.DynQuery("select * from tb where name={{.name}} and id in (select uid from anothertable where score in {{.m_score}}){{ if .ds }}{{ end }}", map[string]interface{}{
 	"name": "caibirdme",
 	"m_score": []float64{3.0, 5.8, 7.9},
 })
 db.Query(sql)
 ```
+if condition value is a slice, it should be converted to a string with comma separated automatically
 
 **For critical system, this is recommended**
 
