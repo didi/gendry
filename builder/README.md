@@ -215,6 +215,8 @@ sql := builder.DynQuery("select * from tb where name={{.name}} and id in (select
 
 if condition value is a slice, it should be converted to a string with comma separated automatically.
 
+`DynQuery` base on text/template, so can get more help from [doc](https://golang.org/pkg/text/template/).
+
 #### `BuildDelete`
 
 sign: `BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error)`
