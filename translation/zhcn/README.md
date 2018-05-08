@@ -92,6 +92,17 @@ slice类型的值会根据slice的长度自动展开
 这种方式基本上就是手写sql，非常便于DBA review同时也方便开发者进行复杂sql的调优  
 **对于关键系统，推荐使用这种方式**
 
+对于复杂的、需要动态组建sql查询, `DynQuery`将会派上用场:
+```go
+sql := builder.DynQuery("select * from tb where name={{.name}} and id in (select uid from anothertable where score in {{.m_score}}){{ if .ds }}{{ end }}", map[string]interface{}{
+	"name": "caibirdme",
+	"m_score": []float64{3.0, 5.8, 7.9},
+})
+```
+slice类型的值会根据slice的长度自动展开  
+这种方式基本上就是手写sql，非常便于DBA review同时也方便开发者进行复杂sql的调优  
+**对于关键系统，推荐使用这种方式**
+
 具体文档看[builder](../builder/README.md)
 
 <h3 id="scanner">Scanner</h3>

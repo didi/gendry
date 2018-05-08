@@ -199,6 +199,24 @@ assert.Equal("select * from tb where name=? and id in (select uid from anotherta
 assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9}, vals)
 ```
 
+#### `DynQuery`
+
+sign: `func DynQuery(sql string, data map[string]interface{}) string`
+
+For very complex dynamic condition query, this might be helpful. And for critical system, this is recommended.
+
+
+```go
+sql := builder.DynQuery("select * from tb where name={{.name}} and id in (select uid from anothertable where score in {{.m_score}}){{ if .ds }}{{ end }}", map[string]interface{}{
+	"name": "caibirdme",
+	"m_score": []float64{3.0, 5.8, 7.9},
+})
+```
+
+if condition value is a slice, it should be converted to a string with comma separated automatically.
+
+`DynQuery` base on text/template, so can get more help from [doc](https://golang.org/pkg/text/template/).
+
 #### `BuildDelete`
 
 sign: `BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error)`

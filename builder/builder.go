@@ -1,12 +1,14 @@
 package builder
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
 	"sync"
+	"text/template"
 )
 
 var (
@@ -393,6 +395,29 @@ func NamedQuery(sql string, data map[string]interface{}) (string, []interface{},
 		return "", nil, err
 	}
 	return cond, vals, nil
+}
+
+func DynQuery(sql string, data map[string]interface{}) string {
+	cond := convertMapSlice(data)
+	var rs bytes.Buffer
+	t := template.Must(template.New("sql").Parse(sql))
+	t.Execute(&rs, cond)
+	return rs.String()
+}
+
+func convertMapSlice(data map[string]interface{}) map[string]interface{} {
+	for k, v := range data {
+		t := reflect.TypeOf(v)
+		if t.Kind() == reflect.Slice {
+			switch t.Elem().Kind() {
+			case reflect.String:
+				data[k] = fmt.Sprintf(`("%s")`, strings.Trim(strings.Replace(fmt.Sprint(v), " ", "\",\"", -1), "[]"))
+			default:
+				data[k] = fmt.Sprintf(`(%s)`, strings.Trim(strings.Replace(fmt.Sprint(v), " ", ",", -1), "[]"))
+			}
+		}
+	}
+	return data
 }
 
 func createMultiPlaceholders(num int) string {
