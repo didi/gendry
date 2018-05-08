@@ -207,7 +207,7 @@ For very complex dynamic condition query, this might be helpful. And for critica
 
 
 ```go
-sql := builder.DynQuery("select * from tb where name={{.name}} and id in (select uid from anothertable where score in {{.m_score|safes}}){{ if .ds|safes }}{{ end }}", map[string]interface{}{
+sql := builder.DynQuery("select * from tb where name={{.name}} and id in (select uid from anothertable where score in {{.m_score}}){{ if .ds }}{{ end }}", map[string]interface{}{
 	"name": "caibirdme",
 	"m_score": []float64{3.0, 5.8, 7.9},
 })
