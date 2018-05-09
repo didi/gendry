@@ -22,6 +22,51 @@ type Comparable interface {
 	Build() ([]string, []interface{})
 }
 
+// NullType is the NULL type in mysql
+type NullType byte
+
+func (nt NullType) String() string {
+	if nt == IsNull {
+		return "IS NULL"
+	}
+	return "IS NOT NULL"
+}
+
+const (
+	_ NullType = iota
+	// IsNull the same as `is null`
+	IsNull
+	// IsNotNull the same as `is not null`
+	IsNotNull
+)
+
+type nullCompareble map[string]interface{}
+
+func (n nullCompareble) Build() ([]string, []interface{}) {
+	length := len(n)
+	if nil == n || 0 == length {
+		return nil, nil
+	}
+	sortedKey := make([]string, 0, length)
+	cond := make([]string, 0, length)
+	for k := range n {
+		sortedKey = append(sortedKey, k)
+	}
+	defaultSortAlgorithm(sortedKey)
+	for _, field := range sortedKey {
+		v, ok := n[field]
+		if !ok {
+			continue
+		}
+		rv, ok := v.(NullType)
+		if !ok {
+			continue
+		}
+		cond = append(cond, field+" "+rv.String())
+	}
+	return cond, nil
+}
+
 type nilComparable byte
 
 func (n nilComparable) Build() ([]string, []interface{}) {

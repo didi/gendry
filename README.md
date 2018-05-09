@@ -54,9 +54,10 @@ builder isn't an ORM, in fact one of the most important reasons we create Gendry
 
 ```go
 where := map[string]interface{}{
-	"city in": []interface{}{"beijing", "shanghai"},
+	"city in": []string{"beijing", "shanghai"},
 	"score": 5,
 	"age >": 35,
+	"address": builder.IsNotNull,
 	"_orderby": "bonus desc",
 	"_groupby": "department",
 }
@@ -64,7 +65,7 @@ table := "some_table"
 selectFields := []string{"name", "age", "sex"}
 cond, values, err := builder.BuildSelect(table, where, selectFields)
 
-//cond = SELECT name,age,sex FROM g_xxx WHERE (city IN (?,?) AND score=? AND age>?) GROUP BY department ORDER BY bonus DESC
+//cond = SELECT name,age,sex FROM g_xxx WHERE (score=? AND city IN (?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
 //values = []interface{}{"beijing", "shanghai", 5, 35}
 
 rows,err := db.Query(cond, values...)

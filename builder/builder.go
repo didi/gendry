@@ -215,6 +215,9 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, func(), err
 		if nil != err {
 			return nil, emptyFunc, err
 		}
+		if _, ok := val.(NullType); ok {
+			operator = opNull
+		}
 		wms.add(operator, field, val)
 	}
 
@@ -231,6 +234,8 @@ const (
 	opLt   = "<"
 	opLte  = "<="
 	opLike = "like"
+	// special
+	opNull = "null"
 )
 
 type compareProducer func(m map[string]interface{}) (Comparable, error)
@@ -267,9 +272,12 @@ var op2Comparable = map[string]compareProducer{
 	opLike: func(m map[string]interface{}) (Comparable, error) {
 		return Like(m), nil
 	},
+	opNull: func(m map[string]interface{}) (Comparable, error) {
+		return nullCompareble(m), nil
+	},
 }
 
-var opOrder = []string{opEq, opIn, opNe1, opNe2, opGt, opGte, opLt, opLte, opLike}
+var opOrder = []string{opEq, opIn, opNe1, opNe2, opGt, opGte, opLt, opLte, opLike, opNull}
 
 func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
 	cpArr, release := getCpPool()
