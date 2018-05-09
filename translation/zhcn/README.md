@@ -93,7 +93,7 @@ slice类型的值会根据slice的长度自动展开
 这种方式基本上就是手写sql，非常便于DBA review同时也方便开发者进行复杂sql的调优  
 **对于关键系统，推荐使用这种方式**
 
-具体文档看[builder](../builder/README.md)
+具体文档看[builder](../../builder/README.md)
 
 <h3 id="scanner">Scanner</h3>
 执行了数据库操作之后，要把返回的结果集和自定义的struct进行映射。Scanner提供一个简单的接口通过反射来进行结果集和自定义类型的绑定:
