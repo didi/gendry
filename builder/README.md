@@ -14,7 +14,7 @@ package main
 import (
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
-    qb "github.com/didichuxing/gendry/builder"
+    qb "github.com/didi/gendry/builder"
 )
 
 func main() {
