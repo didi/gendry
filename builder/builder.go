@@ -95,8 +95,12 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 			return
 		}
 		if len(arr) != 2 {
-			err = errLimitValueLength
-			return
+			if len(arr) == 1 {
+				arr = []uint{0, arr[0]}
+			} else {
+				err = errLimitValueLength
+				return
+			}
 		}
 		begin, step := arr[0], arr[1]
 		limit = &eleLimit{
