@@ -108,13 +108,28 @@ func ScanMap(rows Rows) ([]map[string]interface{}, error) {
 	return resolveDataFromRows(rows)
 }
 
+// CloseErr is the error occurs when rows.Close()
+type CloseErr struct {
+	err error
+}
+
+func (e CloseErr) Error() string {
+	return e.err.Error()
+}
+
+func newCloseErr(err error) error {
+	return CloseErr{err}
+}
+
 // ScanMapClose is the same as ScanMap and close the rows
 func ScanMapClose(rows Rows) ([]map[string]interface{}, error) {
 	result, err := ScanMap(rows)
-	if nil != err {
-		return nil, err
+	if nil != rows {
+		errClose := rows.Close()
+		if err == nil {
+			err = newCloseErr(errClose)
+		}
 	}
-	err = rows.Close()
 	return result, err
 }
 
@@ -123,8 +138,9 @@ func ScanMapClose(rows Rows) ([]map[string]interface{}, error) {
 func ScanClose(rows Rows, target interface{}) error {
 	err := Scan(rows, target)
 	if nil != rows {
-		if nil == err {
-			err = rows.Close()
+		errClose := rows.Close()
+		if err == nil {
+			err = newCloseErr(errClose)
 		}
 	}
 	return err
@@ -351,9 +367,8 @@ func handleConvertSlice(mapValue interface{}, mvt, vit reflect.Type, valuei *ref
 	default:
 		if _, ok := valuei.Interface().(ByteUnmarshaler); ok {
 			return byteUnmarshal(mapValueSlice, valuei, wrapErr)
-		} else {
-			return wrapErr(mvt, vit)
 		}
+		return wrapErr(mvt, vit)
 	}
 	return nil
 }

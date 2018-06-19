@@ -610,7 +610,7 @@ func TestScanMapClose(t *testing.T) {
 	}
 	result, err := ScanMapClose(scannn)
 	ass.Equal(2, len(result))
-	ass.Equal(errCloseForTest, err)
+	ass.Equal(errCloseForTest.Error(), err.Error())
 	v, ok := result[0]["foo"]
 	if !ass.True(ok) {
 		return
@@ -743,4 +743,24 @@ func TestUnmarshalByte(t *testing.T) {
 		ass.Equal(tc.err, err, "idx:%d", idx)
 		ass.Equal(tc.expect, student, "idx:%d", idx)
 	}
+}
+
+func TestScanClose(t *testing.T) {
+	rows := &fakeRows{
+		columns: []string{"foo", "bar"},
+		dataset: [][]interface{}{
+			[]interface{}{1, 2},
+		},
+	}
+	var testObj = struct {
+		Foo int `ddb:"foo"`
+		Bar int `ddb:"bar"`
+	}{}
+	ass := assert.New(t)
+	err := ScanClose(rows, &testObj)
+	e, ok := err.(CloseErr)
+	ass.True(ok)
+	ass.Equal(errCloseForTest.Error(), e.Error())
+	ass.Equal(1, testObj.Foo)
+	ass.Equal(2, testObj.Bar)
 }
