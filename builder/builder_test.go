@@ -91,6 +91,36 @@ func TestBuildHaving(t *testing.T) {
 				err:  nil,
 			},
 		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"_limit": []uint{1},
+					"age in": []interface{}{1, 2, 3},
+				},
+				selectField: []string{"name, age"},
+			},
+			out: outStruct{
+				cond: "SELECT name, age FROM tb WHERE (age IN (?,?,?)) LIMIT 0,1",
+				vals: []interface{}{1, 2, 3},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"_limit": []uint{2, 1},
+					"age in": []interface{}{1, 2, 3},
+				},
+				selectField: []string{"name, age"},
+			},
+			out: outStruct{
+				cond: "SELECT name, age FROM tb WHERE (age IN (?,?,?)) LIMIT 2,1",
+				vals: []interface{}{1, 2, 3},
+				err:  nil,
+			},
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
