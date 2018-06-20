@@ -106,7 +106,9 @@ where := map[string]interface{}{
 ```
 Note:
 * _having will be ignored if _groupby isn't setted
-* value of _limit must be []uint{begin, end}
+* value of _limit could be:
+    * `"_limit": []uint{a,b}` => `LIMIT a,b`
+    * `"_limit": []uint{a}` => `LIMIT 0,a`
 
 #### Aggregate
 
