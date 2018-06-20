@@ -684,3 +684,57 @@ func Test_Where_Null(t *testing.T) {
 		ass.Equal(tc.out.vals, vals)
 	}
 }
+
+func TestBuildSelect_Limit(t *testing.T) {
+	var testCase = []struct {
+		limit  []uint
+		err    error
+		expect string
+	}{
+		{
+			limit:  []uint{10, 20},
+			err:    nil,
+			expect: "LIMIT 10,20",
+		},
+		{
+			limit:  []uint{0, 10},
+			err:    nil,
+			expect: "LIMIT 0,10",
+		},
+		{
+			limit:  []uint{0, 1},
+			err:    nil,
+			expect: "LIMIT 0,1",
+		},
+		{
+			limit:  []uint{1},
+			err:    nil,
+			expect: "LIMIT 0,1",
+		},
+		{
+			limit:  []uint{20, 10},
+			err:    nil,
+			expect: "LIMIT 20,10",
+		},
+		{
+			limit:  []uint{},
+			err:    errLimitValueLength,
+			expect: "",
+		},
+		{
+			limit:  []uint{1, 2, 3},
+			err:    errLimitValueLength,
+			expect: "",
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range testCase {
+		cond, _, err := BuildSelect("tb", map[string]interface{}{
+			"_limit": tc.limit,
+		}, nil)
+		ass.Equal(tc.err, err)
+		if tc.err == nil {
+			ass.Equal(`SELECT * FROM tb `+tc.expect, cond, "where=%+v", tc.limit)
+		}
+	}
+}
