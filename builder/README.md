@@ -84,7 +84,7 @@ where := map[string]interface{}{
 	"foo <>": "aha",
 	"bar <=": 45,
 	"sex in": []interface{}{"girl", "boy"},
-    "name like": "%James",
+	"name like": "%James",
 }
 ```
 
@@ -100,7 +100,7 @@ where := map[string]interface{}{
 	"age >": 100,
 	"_orderby": "fieldName asc",
 	"_groupby": "fieldName",
-    "_having": map[string]interface{}{"foo":"bar",},
+	"_having": map[string]interface{}{"foo":"bar",},
 	"_limit": []uint{begin,end},
 }
 ```
