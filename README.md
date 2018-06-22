@@ -65,7 +65,7 @@ table := "some_table"
 selectFields := []string{"name", "age", "sex"}
 cond, values, err := builder.BuildSelect(table, where, selectFields)
 
-//cond = SELECT name,age,sex FROM g_xxx WHERE (score=? AND city IN (?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
+//cond = SELECT name,age,sex FROM some_table WHERE (score=? AND city IN (?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
 //values = []interface{}{"beijing", "shanghai", 5, 35}
 
 rows,err := db.Query(cond, values...)
@@ -156,7 +156,7 @@ type extraInfo struct {
 	LuckyNumber int      `json:"ln"`
 }
 
-func (ext *extraInfo) UnmarshalDB(data []byte) error {
+func (ext *extraInfo) UnmarshalByte(data []byte) error {
 	return json.Unmarshal(data, ext)
 }
 
