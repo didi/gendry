@@ -11,13 +11,13 @@ import (
 
 var (
 	errSplitEmptyKey = errors.New("[builder] couldn't split a empty string")
-	errSplitOrderBy  = errors.New(`[builder] the value of _orderby should be "field direction"`)
+	errSplitOrderBy  = errors.New(`[builder] the value of _orderby should be "fieldName direction [,fieldName direction]"`)
 	// ErrUnsupportedOperator reports there's unsupported operators in where-condition
 	ErrUnsupportedOperator       = errors.New("[builder] unsupported operator")
 	errWhereInType               = errors.New(`[builder] the value of "xxx in" must be of []interface{} type`)
 	errGroupByValueType          = errors.New(`[builder] the value of "_groupby" must be of string type`)
 	errLimitValueType            = errors.New(`[builder] the value of "_limit" must be of []uint type`)
-	errLimitValueLength          = errors.New(`[builder] the value of "_limit" must contain two uint elements`)
+	errLimitValueLength          = errors.New(`[builder] the value of "_limit" must contain one or two uint elements`)
 	errEmptyINCondition          = errors.New(`[builder] the value of "in" must contain at least one element`)
 	errHavingValueType           = errors.New(`[builder] the value of "_having" must be of map[string]interface{}`)
 	errHavingUnsupportedOperator = errors.New(`[builder] "_having" contains unsupported operator`)
