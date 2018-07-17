@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"database/sql"
+	"strconv"
 )
 
 // AggregateQuery is a helper function to execute the aggregate query and return the result
@@ -50,6 +51,12 @@ func (r resultResolve) Int64() int64 {
 	f64, ok := r.data.(float64)
 	if ok {
 		return int64(f64)
+	}
+	u8L, ok := r.data.([]uint8)
+	if ok {
+		s := string(u8L)
+		u64, _ := strconv.ParseUint(s, 10, 0)
+		return int64(u64)
 	}
 	f32, _ := r.data.(float32)
 	return int64(f32)
