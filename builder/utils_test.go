@@ -16,6 +16,31 @@ func TestResultResolver(t *testing.T) {
 		floatout float64
 	}{
 		{
+			origin:   []byte{'+', '0', '5', '3', '2', '.', '0', '7'},
+			intout:   532,
+			floatout: 532.07,
+		},
+		{
+			origin:   []byte{'+', '5', '3', '2', '.', '3', '7'},
+			intout:   532,
+			floatout: 532.37,
+		},
+		{
+			origin:   []byte{'-', '5', '3', '2', '.', '3', '7'},
+			intout:   -532,
+			floatout: -532.37,
+		},
+		{
+			origin:   []uint8{'-', '5', '3', '2', '.', '3', '7'},
+			intout:   -532,
+			floatout: -532.37,
+		},
+		{
+			origin:   []uint8{'5', '3', '2', '.', '3', '7'},
+			intout:   532,
+			floatout: 532.37,
+		},
+		{
 			origin:   10,
 			intout:   10,
 			floatout: 10.0,
@@ -25,12 +50,17 @@ func TestResultResolver(t *testing.T) {
 			intout:   4,
 			floatout: 4.5,
 		},
+		{
+			origin:   []uint8{'5', '3', '2'},
+			intout:   532,
+			floatout: 532.0,
+		},
 	}
 	ass := assert.New(t)
-	for _, tc := range testData {
+	for idx, tc := range testData {
 		rr := resultResolve{tc.origin}
-		ass.Equal(tc.intout, rr.Int64())
-		ass.True(math.Abs(tc.floatout-rr.Float64()) < 1e-5)
+		ass.Equal(tc.intout, rr.Int64(), "case#%d fail", idx)
+		ass.True(math.Abs(tc.floatout-rr.Float64()) < 1e-5, "case#%d fail", idx)
 	}
 }
 

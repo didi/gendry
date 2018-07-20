@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"database/sql"
+	"strconv"
 )
 
 // AggregateQuery is a helper function to execute the aggregate query and return the result
@@ -35,38 +36,42 @@ type resultResolve struct {
 }
 
 func (r resultResolve) Int64() int64 {
-	i64, ok := r.data.(int64)
-	if ok {
+	switch t := r.data.(type) {
+	case int64:
+		return t
+	case int32:
+		return int64(t)
+	case int:
+		return int64(t)
+	case float64:
+		return int64(t)
+	case float32:
+		return int64(t)
+	case []uint8:
+		i64, err := strconv.ParseInt(string(t), 10, 64)
+		if nil != err {
+			return int64(r.Float64())
+		}
 		return i64
+	default:
+		return 0
 	}
-	i32, ok := r.data.(int32)
-	if ok {
-		return int64(i32)
-	}
-	i, ok := r.data.(int)
-	if ok {
-		return int64(i)
-	}
-	f64, ok := r.data.(float64)
-	if ok {
-		return int64(f64)
-	}
-	f32, _ := r.data.(float32)
-	return int64(f32)
 }
 
 // from go-mysql-driver/mysql the value returned could be int64 float64 float32
 
 func (r resultResolve) Float64() float64 {
-	f64, ok := r.data.(float64)
-	if ok {
+	switch t := r.data.(type) {
+	case float64:
+		return t
+	case float32:
+		return float64(t)
+	case []uint8:
+		f64, _ := strconv.ParseFloat(string(t), 64)
 		return f64
+	default:
+		return float64(r.Int64())
 	}
-	f32, ok := r.data.(float32)
-	if ok {
-		return float64(f32)
-	}
-	return float64(r.Int64())
 }
 
 // AggregateSymbleBuilder need to be implemented so that executor can
