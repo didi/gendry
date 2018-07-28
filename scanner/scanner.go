@@ -118,6 +118,9 @@ func (e CloseErr) Error() string {
 }
 
 func newCloseErr(err error) error {
+	if err == nil {
+		return nil
+	}
 	return CloseErr{err}
 }
 

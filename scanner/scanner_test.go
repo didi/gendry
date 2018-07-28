@@ -764,3 +764,13 @@ func TestScanClose(t *testing.T) {
 	ass.Equal(1, testObj.Foo)
 	ass.Equal(2, testObj.Bar)
 }
+
+func TestErrClose(t *testing.T) {
+	ass := assert.New(t)
+	err := newCloseErr(nil)
+	ass.Nil(err)
+	err = newCloseErr(errors.New("123"))
+	ass.NotPanics(func() {
+		ass.Equal("123", err.Error())
+	})
+}
