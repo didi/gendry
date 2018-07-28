@@ -1,5 +1,6 @@
 ## Gendry
 [![Build Status](https://www.travis-ci.org/didi/gendry.svg?branch=master)](https://www.travis-ci.org/didi/gendry)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/didi-gendry/Lobby)
 [![Hex.pm](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/didi/gendry/blob/master/LICENSE)
 [![GoDoc](https://godoc.org/github.com/didi/gendry?status.svg)](https://godoc.org/github.com/didi/gendry)
 
