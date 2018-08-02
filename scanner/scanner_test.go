@@ -774,3 +774,46 @@ func TestErrClose(t *testing.T) {
 		ass.Equal("123", err.Error())
 	})
 }
+
+func TestScanMapDecode(t *testing.T) {
+	ass := assert.New(t)
+	var testCase = []struct {
+		rows   Rows
+		expect []map[string]interface{}
+	}{
+		{
+			rows: &fakeRows{
+				columns: []string{"name", "age", "score"},
+				dataset: [][]interface{}{
+					[]interface{}{
+						[]byte("C.Ronaldo"),
+						[]uint8{0x33, 0x33},
+						[]uint8{0x39, 0x2E, 0x38, 0x35},
+					},
+					[]interface{}{
+						[]uint8("Paul Pogba"),
+						27,
+						[]uint8{0x38, 0x2E, 0x32, 0x37, 0x35},
+					},
+				},
+			},
+			expect: []map[string]interface{}{
+				map[string]interface{}{
+					"name":  "C.Ronaldo",
+					"age":   33,
+					"score": 9.85,
+				},
+				map[string]interface{}{
+					"name":  "Paul Pogba",
+					"age":   27,
+					"score": 8.275,
+				},
+			},
+		},
+	}
+	for idx, tc := range testCase {
+		result, err := ScanMapDecode(tc.rows)
+		ass.Nil(err, "case #%d fail", idx)
+		ass.Equal(tc.expect, result, "case #%d fail", idx)
+	}
+}

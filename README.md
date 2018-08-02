@@ -191,6 +191,9 @@ for _,record := range result {
 	fmt.Println(record["name"], record["m_age"])
 }
 ```
+ScanMap scans data from rows and returns a `[]map[string]interface{}`  
+int,float,string type may be stored as []uint8 by mysql driver, ScanMap just copy those value into the map. If you're sure that there's no binary data type in your mysql table(in most cases, this is true), you can use ScanMapDecode instead which will convert []uint8 to int,float64 or string
+
 For more detail,see [scanner's doc](scanner/README.md)
 
 PS：

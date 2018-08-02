@@ -104,8 +104,59 @@ func Scan(rows Rows, target interface{}) error {
 }
 
 // ScanMap returns the result in the form of []map[string]interface{}
+// json.Marshal encodes []byte as a base64 string, while in most cases
+// it's expected to be encoded as string or int. If you want this, use
+// ScanMapDecode instead.
 func ScanMap(rows Rows) ([]map[string]interface{}, error) {
 	return resolveDataFromRows(rows)
+}
+
+// ScanMapDecode returns the result in the form of []map[string]interface{}
+// If possible, it will convert []uint8 to int or float64, or it will convert
+// []uint8 to string
+func ScanMapDecode(rows Rows) ([]map[string]interface{}, error) {
+	results, err := resolveDataFromRows(rows)
+	if nil != err {
+		return nil, err
+	}
+	for i := 0; i < len(results); i++ {
+		for k, v := range results[i] {
+			rv, ok := v.([]uint8)
+			if !ok {
+				continue
+			}
+			s := string(rv)
+			//convert to int
+			intVal, err := strconv.Atoi(s)
+			if err == nil {
+				results[i][k] = intVal
+				continue
+			}
+			//convert to float64
+			floatVal, err := strconv.ParseFloat(s, 64)
+			if err == nil {
+				results[i][k] = floatVal
+				continue
+			}
+			// convert to string
+			results[i][k] = s
+		}
+	}
+	return results, nil
+}
+
+// ScanMapDecodeClose returns the result in the form of []map[string]interface{}
+// If possible, it will convert []uint8 to int or float64, or it will convert
+// []uint8 to string. It will close the rows in the end.
+func ScanMapDecodeClose(rows Rows) ([]map[string]interface{}, error) {
+	result, err := ScanMapDecode(rows)
+	if nil != rows {
+		errClose := rows.Close()
+		if err == nil {
+			err = newCloseErr(errClose)
+		}
+	}
+	return result, err
 }
 
 // CloseErr is the error occurs when rows.Close()
