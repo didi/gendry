@@ -252,7 +252,7 @@ func whereConnector(conditions ...Comparable) (string, []interface{}) {
 
 // deprecated
 func quoteField(field string) string {
-	return field
+	return "`" + field + "`"
 }
 
 func buildInsert(table string, setMap []map[string]interface{}) (string, []interface{}, error) {
