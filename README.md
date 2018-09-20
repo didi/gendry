@@ -170,7 +170,7 @@ err := scanner.Scan(rows, &student)
 The extra tag of the struct will be used by scanner resolve data from response.The default tag name is `ddb:"tagname"`,but you can specify your own such as:
 
 ``` go
-scaner.SetTagName("json")
+scanner.SetTagName("json")
 type Person struct {
 	Name string `json:"name"`
 	Age int `json:"m_age"`
@@ -178,7 +178,7 @@ type Person struct {
 
 // ...
 var student Person
-scaner.Scan(rows, &student)
+scanner.Scan(rows, &student)
 ```
 
 **scanner.SetTagName is a global setting and it can be invoked only once**
@@ -186,7 +186,7 @@ scaner.Scan(rows, &student)
 #### ScanMap
 ```go
 rows,_ := db.Query("select name,age as m_age from person")
-result,err := scaner.ScanMap(rows)
+result,err := scanner.ScanMap(rows)
 for _,record := range result {
 	fmt.Println(record["name"], record["m_age"])
 }
