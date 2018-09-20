@@ -120,7 +120,7 @@ scanner进行反射时会使用结构体的tag，如上所示，scanner会把结
 
 ``` go
 
-scaner.SetTagName("json")
+scanner.SetTagName("json")
 
 type Person struct {
 	Name string `json:"name"`
