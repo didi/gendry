@@ -365,6 +365,122 @@ func Test_Slice_2_Int(t *testing.T) {
 	}
 }
 
+func Test_Scan_Pointer(t *testing.T) {
+	type user struct {
+		Age *int `ddb:"age"`
+	}
+	var testData = []struct {
+		in  []byte
+		out int
+	}{
+		{
+			in:  []byte{'1', '2', '3'},
+			out: 123,
+		},
+		{
+			in:  []byte{'0', '2', '3'},
+			out: 23,
+		},
+		{
+			in:  []byte{'0', '0', '0'},
+			out: 0,
+		},
+		{
+			in:  []byte{'0', '0', '6', '5', '5', '3', '6'},
+			out: 65536,
+		},
+		{
+			in:  []byte("9223372036854775807"),
+			out: 9223372036854775807,
+		},
+		{
+			in: []byte("9223372036854775808"),
+			// RAII value
+			out: 0,
+		},
+	}
+	var u user
+	ass := assert.New(t)
+	for idx, tc := range testData {
+		mp := map[string]interface{}{
+			"age": tc.in,
+		}
+		bind(mp, &u)
+		ass.Equal(tc.out, *u.Age, "case #%d fail", idx)
+	}
+}
+
+func float64Ptr(v float64) *float64 {
+	return &v
+}
+
+func int64Ptr(v int64) *int64 {
+	return &v
+}
+
+func stringPtr(s string) *string {
+	return &s
+}
+
+func Test_Scan_Multi_Pointer(t *testing.T) {
+	type user struct {
+		Score *float64 `ddb:"s"`
+		Name  *string  `ddb:"nm"`
+	}
+	var testData = []struct {
+		in  map[string]interface{}
+		out user
+	}{
+		{
+			in: map[string]interface{}{
+				"s":  nil,
+				"nm": "hello",
+			},
+			out: user{
+				Name: stringPtr("hello"),
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"s":  nil,
+				"nm": nil,
+			},
+			out: user{},
+		},
+		{
+			in: map[string]interface{}{
+				"nm": nil,
+			},
+			out: user{},
+		},
+		{
+			in: map[string]interface{}{
+				"nm": nil,
+				"s":  3.141592653,
+			},
+			out: user{
+				Score: float64Ptr(3.141592653),
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"s":  10.5,
+				"nm": "hello",
+			},
+			out: user{
+				Score: float64Ptr(10.5),
+				Name:  stringPtr("hello"),
+			},
+		},
+	}
+	ass := assert.New(t)
+	for idx, tc := range testData {
+		var u user
+		bind(tc.in, &u)
+		ass.Equal(tc.out, u, "case #%d fail %+v", idx, u)
+	}
+}
+
 func Test_Slice_2_UInt(t *testing.T) {
 	type user struct {
 		Age uint `ddb:"age"`

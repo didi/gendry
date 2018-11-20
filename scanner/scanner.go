@@ -267,8 +267,14 @@ func bind(result map[string]interface{}, target interface{}) (resp error) {
 			continue
 		}
 		mapValue, ok := result[tagName]
-		if !ok {
+		if !ok || mapValue == nil {
 			continue
+		}
+		// if one field is a pointer type, we must allocate memory for it first
+		// except for that the pointer type implements the interface ByteUnmarshaler
+		if fieldTypeI.Type.Kind() == reflect.Ptr && !fieldTypeI.Type.Implements(_byteUnmarshalerType) {
+			valuei.Set(reflect.New(fieldTypeI.Type.Elem()))
+			valuei = valuei.Elem()
 		}
 		err := convert(mapValue, valuei, wrapErr)
 		if nil != err {
@@ -277,6 +283,8 @@ func bind(result map[string]interface{}, target interface{}) (resp error) {
 	}
 	return nil
 }
+
+var _byteUnmarshalerType = reflect.TypeOf(new(ByteUnmarshaler)).Elem()
 
 type convertErrWrapper func(from, to reflect.Type) ScanErr
 
