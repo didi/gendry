@@ -941,7 +941,7 @@ func TestBindTagNoJson(t *testing.T) {
 		Age  int    `ddb:"ag"`
 	}
 	var p Person
-	name := ""
+	name := "deen"
 	age := 23
 	var mp = map[string]interface{}{
 		"name": name,
@@ -950,7 +950,7 @@ func TestBindTagNoJson(t *testing.T) {
 	err := bind(mp, &p)
 	ass := assert.New(t)
 	ass.NoError(err)
-	ass.Equal(name, p.Name)
+	ass.Equal("", p.Name)
 	ass.Equal(age, p.Age)
 }
 
@@ -986,17 +986,21 @@ func TestBindTag(t *testing.T) {
 	type Person struct {
 		Name string `json:"name" ddb:"-"`
 		Age  int    `json:"ag"`
+		Sex  string `json:"-"`
 	}
 	var p Person
 	name := "deen"
 	age := 23
+	sex := "woman"
 	var mp = map[string]interface{}{
 		"name": name,
 		"ag":   age,
+		"sex":  sex,
 	}
 	err := bind(mp, &p)
 	ass := assert.New(t)
 	ass.NoError(err)
 	ass.Equal("", p.Name)
 	ass.Equal(age, p.Age)
+	ass.Equal("", p.Sex)
 }
