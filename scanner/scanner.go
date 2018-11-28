@@ -331,16 +331,25 @@ func resolveDataFromRows(rows Rows) ([]map[string]interface{}, error) {
 }
 
 func lookUpTagName(typeObj reflect.StructField) (string, bool) {
-	var tName string
-	if "" != userDefinedTagName {
-		tName = userDefinedTagName
-	} else {
-		tName = DefaultTagName
-	}
-	name, ok := typeObj.Tag.Lookup(tName)
+	var name string
+	var ok bool
+
+	name, ok = typeObj.Tag.Lookup(DefaultTagName)
 	if !ok {
+		if "" != userDefinedTagName {
+			name, ok = typeObj.Tag.Lookup(userDefinedTagName)
+			if !ok {
+				return "", false
+			}
+		} else {
+			return "", false
+		}
+	}
+
+	if name == "-" {
 		return "", false
 	}
+
 	name = resolveTagName(name)
 	return name, ok
 }

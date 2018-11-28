@@ -933,3 +933,70 @@ func TestScanMapDecode(t *testing.T) {
 		ass.Equal(tc.expect, result, "case #%d fail", idx)
 	}
 }
+
+func TestBindTagNoJson(t *testing.T) {
+
+	type Person struct {
+		Name string `json:"name"`
+		Age  int    `ddb:"ag"`
+	}
+	var p Person
+	name := ""
+	age := 23
+	var mp = map[string]interface{}{
+		"name": name,
+		"ag":   age,
+	}
+	err := bind(mp, &p)
+	ass := assert.New(t)
+	ass.NoError(err)
+	ass.Equal(name, p.Name)
+	ass.Equal(age, p.Age)
+}
+
+func TestBindTagJson(t *testing.T) {
+
+	userDefinedTagName = "json"
+
+	type Person struct {
+		Name string `json:"name"`
+		Age  int    `json:"ag"`
+		Sex  string `jjjj:"sex"`
+	}
+	var p Person
+	name := "deen"
+	age := 23
+	var mp = map[string]interface{}{
+		"name": name,
+		"ag":   age,
+		"sex":  "man",
+	}
+	err := bind(mp, &p)
+	ass := assert.New(t)
+	ass.NoError(err)
+	ass.Equal(name, p.Name)
+	ass.Equal(age, p.Age)
+	ass.Equal("", p.Sex)
+}
+
+func TestBindTag(t *testing.T) {
+
+	userDefinedTagName = "json"
+
+	type Person struct {
+		Name string `json:"name" ddb:"-"`
+		Age  int    `json:"ag"`
+	}
+	var p Person
+	name := "deen"
+	age := 23
+	var mp = map[string]interface{}{
+		"name": name,
+		"ag":   age,
+	}
+	err := bind(mp, &p)
+	ass := assert.New(t)
+	ass.NoError(err)
+	ass.Equal("", p.Name)
+	ass.Equal(age, p.Age)
+}
