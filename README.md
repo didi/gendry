@@ -6,7 +6,7 @@
 
 **gendry** is a Go library that helps you operate database. Based on `go-sql-driver/mysql`, it provides a series of simple but useful tools to prepare parameters for calling methods in standard library `database/sql`.
 
-The name **gendry** comes from the role in the hottest drama `The Game of Throne`, in which Gendry is not only the bastardy of the late king Robert Baratheon but also a skilled blacksmith. Like the one in drama,this library also forge something which is called `SQL`.
+The name **gendry** comes from the role in the hottest drama `The Game of Throne`, in which Gendry is not only the bastardy of the late king Robert Baratheon but also a skilled blacksmith. Like the one in drama, this library also forge something which is called `SQL`.
 
 **gendry** consists of three isolated parts, and you can use each one of them partially:
 
@@ -46,10 +46,10 @@ the format of a `dataSourceName` is：
 [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
 ```
 
-manager is based on `go-mysql-driver/mysql`,and if you don't know some of the manager.SetXXX series functions,see it on [mysql driver's github home page](https://github.com/go-sql-driver/mysql).And for more details see [manager's doc](manager/README.md)
+manager is based on `go-mysql-driver/mysql`, and if you don't know some of the manager.SetXXX series functions, see it on [mysql driver's github home page](https://github.com/go-sql-driver/mysql).And for more details see [manager's doc](manager/README.md)
 
 <h3 id="builder">Builder</h3>
-builder as its name says, is for building sql.Writing sql mannually is intuitive but somewhat difficult to maintain.And for `where in`,if you have huge amount of elements in the `in` set,it's very hard to write.
+builder as its name says, is for building sql.Writing sql manually is intuitive but somewhat difficult to maintain.And for `where in`, if you have huge amount of elements in the `in` set, it's very hard to write.
 
 builder isn't an ORM, in fact one of the most important reasons we create Gendry is we don't like ORM. So Gendry just provides some simple APIs to help you building sqls:
 
@@ -66,24 +66,24 @@ table := "some_table"
 selectFields := []string{"name", "age", "sex"}
 cond, values, err := builder.BuildSelect(table, where, selectFields)
 
-//cond = SELECT name,age,sex FROM some_table WHERE (score=? AND city IN (?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
+//cond = SELECT name, age, sex FROM some_table WHERE (score=? AND city IN (?, ?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
 //values = []interface{}{"beijing", "shanghai", 5, 35}
 
-rows,err := db.Query(cond, values...)
+rows, err := db.Query(cond, values...)
 ```
-And, the library provide a useful API for executing aggregate queries like count,sum,max,min,avg
+And, the library provide a useful API for executing aggregate queries like count, sum, max, min, avg
 
 ```go
 where := map[string]interface{}{
     "score > ": 100,
-    "city in": []interface{}{"Beijing", "Shijiazhuang",}
+    "city in": []interface{}{"Beijing", "Shijiazhuang", }
 }
-// AggregateSum,AggregateMax,AggregateMin,AggregateCount,AggregateAvg are supported
+// AggregateSum, AggregateMax, AggregateMin, AggregateCount, AggregateAvg are supported
 result, err := AggregateQuery(ctx, db, "tableName", where, AggregateSum("age"))
 sumAge := result.Int64()
-result,err = AggregateQuery(ctx, db, "tableName", where, AggregateCount("*")) 
+result, err = AggregateQuery(ctx, db, "tableName", where, AggregateCount("*")) 
 numberOfRecords := result.Int64()
-result,err = AggregateQuery(ctx, db, "tableName", where, AggregateAvg("score"))
+result, err = AggregateQuery(ctx, db, "tableName", where, AggregateAvg("score"))
 averageScore := result.Float64()
 ```
 
@@ -94,7 +94,7 @@ cond, vals, err := builder.NamedQuery("select * from tb where name={{name}} and 
 	"m_score": []float64{3.0, 5.8, 7.9},
 })
 
-assert.Equal("select * from tb where name=? and id in (select uid from anothertable where score in (?,?,?))", cond)
+assert.Equal("select * from tb where name=? and id in (select uid from anothertable where score in (?, ?, ?))", cond)
 assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9}, vals)
 ```
 slice type can be expanded automatically according to its length, thus these sqls are very convenient for DBA to review.  
@@ -103,8 +103,8 @@ slice type can be expanded automatically according to its length, thus these sql
 For more detail, see [builder's doc](builder/README.md) or just use `godoc`
 
 <h3 id="scanner">Scanner</h3>
-For each response from mysql,you want to map it with your well-defined structure.
-Scanner provides a very easy API to do this,it's based on reflection:
+For each response from mysql, you want to map it with your well-defined structure.
+Scanner provides a very easy API to do this, it's based on reflection:
 
 ##### standard library
 ```go
@@ -113,7 +113,7 @@ type Person struct {
 	Age int
 }
 
-rows,err := db.Query("SELECT age as m_age,name from g_xxx where xxx")
+rows, err := db.Query("SELECT age as m_age, name from g_xxx where xxx")
 defer rows.Close()
 
 var students []Person
@@ -131,7 +131,7 @@ type Person struct {
 	Age int `ddb:"m_age"`
 }
 
-rows,err := db.Query("SELECT age as m_age,name from g_xxx where xxx")
+rows, err := db.Query("SELECT age as m_age, name from g_xxx where xxx")
 defer rows.Close()
 
 var students []Person
@@ -167,7 +167,7 @@ err := scanner.Scan(rows, &student)
 // ...
 ```
 
-The extra tag of the struct will be used by scanner resolve data from response.The default tag name is `ddb:"tagname"`,but you can specify your own such as:
+The extra tag of the struct will be used by scanner resolve data from response.The default tag name is `ddb:"tagname"`, but you can specify your own such as:
 
 ``` go
 scanner.SetTagName("json")
@@ -185,16 +185,16 @@ scanner.Scan(rows, &student)
 
 #### ScanMap
 ```go
-rows,_ := db.Query("select name,age as m_age from person")
-result,err := scanner.ScanMap(rows)
-for _,record := range result {
+rows, _ := db.Query("select name, age as m_age from person")
+result, err := scanner.ScanMap(rows)
+for _, record := range result {
 	fmt.Println(record["name"], record["m_age"])
 }
 ```
 ScanMap scans data from rows and returns a `[]map[string]interface{}`  
-int,float,string type may be stored as []uint8 by mysql driver, ScanMap just copy those value into the map. If you're sure that there's no binary data type in your mysql table(in most cases, this is true), you can use ScanMapDecode instead which will convert []uint8 to int,float64 or string
+int, float, string type may be stored as []uint8 by mysql driver, ScanMap just copy those value into the map. If you're sure that there's no binary data type in your mysql table(in most cases, this is true), you can use ScanMapDecode instead which will convert []uint8 to int, float64 or string
 
-For more detail,see [scanner's doc](scanner/README.md)
+For more detail, see [scanner's doc](scanner/README.md)
 
 PS：
 
