@@ -181,6 +181,27 @@ var student Person
 scanner.Scan(rows, &student)
 ```
 
+If the default tag is not exist, it will find the extra tag instead. So for the none sepcial fields, it only needs extra tag.
+
+```go
+
+scanner.SetTagName("json")
+
+type Person struct {
+	Age    int    `json:"m_age" ddb:"-"`      // ignore
+	Avatar string `json:"-"`                  // ignore
+	Name   string `json:"name"`               // use extra tag `json:"name"`
+	Sex    string `json:"user_sex" ddb:"sex"` // use default tag `ddb:"sex"`
+	Passwd string `json:"passwd,omitempty"`   // use extra tag `json:"passwd"`
+}
+
+
+// ...
+var student Person
+scaner.Scan(rows, &student)
+```
+
+
 **scanner.SetTagName is a global setting and it can be invoked only once**
 
 #### ScanMap

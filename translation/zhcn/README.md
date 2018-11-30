@@ -132,6 +132,26 @@ var student Person
 scaner.Scan(rows, &student)
 ```
 
+当设置了自定义 tag 之后，如果没有默认 `ddb` tag 存在则会使用自定义 tag。因此对于无特殊字段可以只使用自定义 tag。
+
+```go
+
+scanner.SetTagName("json")
+
+type Person struct {
+    Age    int    `json:"m_age" ddb:"-"`      // 忽略此字段
+    Avatar string `json:"-"`                  // 忽略此字段
+    Name   string `json:"name"`               // 使用自定义 tag `json:"name"`
+    Sex    string `json:"user_sex" ddb:"sex"` // 使用默认 tag `ddb:"sex"`
+    Passwd string `json:"passwd,omitempty"`   // 使用自定义tag `json:"passwd"`
+}
+
+
+// ...
+var student Person
+scaner.Scan(rows, &student)
+```
+
 **scaner.SetTagName是全局设置，为了避免歧义，只允许设置一次，一般在初始化DB阶段进行此项设置**
 
 ### ScanMap
