@@ -66,7 +66,7 @@ table := "some_table"
 selectFields := []string{"name", "age", "sex"}
 cond, values, err := builder.BuildSelect(table, where, selectFields)
 
-//cond = SELECT name, age, sex FROM some_table WHERE (score=? AND city IN (?, ?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
+//cond = SELECT name, age, sex FROM some_table WHERE (city IN (?, ?) AND score=? AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
 //values = []interface{}{"beijing", "shanghai", 5, 35}
 
 rows, err := db.Query(cond, values...)
