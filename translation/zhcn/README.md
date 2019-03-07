@@ -61,6 +61,18 @@ cond, values, err := builder.BuildSelect(table, where, selectFields)
 rows,err := db.Query(cond, values...)
 ```
 
+如果你想清除where map中的零值可以使用 builder.OmitEmpty
+``` go
+where := map[string]interface{}{
+		"score": 0,
+		"age": 35,
+	}
+finalWhere := builder.OmitEmpty(where, []string{"score", "age"})
+// finalWhere = map[string]interface{}{"age": 35}
+
+// support: Bool, Array, String, Float32, Float64, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Uintptr, Map, Slice, Interface, Struct
+```
+
 同时，builder还提供一个便捷方法来进行聚合查询，比如：count,sum,max,min,avg
 
 ```go
