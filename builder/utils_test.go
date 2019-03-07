@@ -186,19 +186,19 @@ func TestOmitEmpty(t *testing.T) {
 			map[string]interface{}{"i8_1": int8(8)},
 		},
 		{
-			map[string]interface{}{"i16": int8(0), "i16_1": int8(16)},
+			map[string]interface{}{"i16": int16(0), "i16_1": int16(16)},
 			[]string{"i16", "i16_1"},
-			map[string]interface{}{"i16_1": int8(16)},
+			map[string]interface{}{"i16_1": int16(16)},
 		},
 		{
-			map[string]interface{}{"i32": int8(0), "i32_1": int8(32)},
+			map[string]interface{}{"i32": int32(0), "i32_1": int32(32)},
 			[]string{"i32", "i32_1"},
-			map[string]interface{}{"i32_1": int8(32)},
+			map[string]interface{}{"i32_1": int32(32)},
 		},
 		{
-			map[string]interface{}{"i64": int8(0), "i64_1": int8(64)},
+			map[string]interface{}{"i64": int64(0), "i64_1": int64(64)},
 			[]string{"i64", "i64_1"},
-			map[string]interface{}{"i64_1": int8(64)},
+			map[string]interface{}{"i64_1": int64(64)},
 		},
 		// Uint, Uint8, Uint16, Uint32, Uint64, Uintptr
 		{
@@ -233,13 +233,13 @@ func TestOmitEmpty(t *testing.T) {
 		},
 		// Map, Slice, Interface
 		{
-			map[string]interface{}{"m1": m, "m2": map[string]string{"foo": "hi"}},
-			[]string{"m1", "m2"},
+			map[string]interface{}{"m1": m, "m2": map[string]string{"foo": "hi"}, "m3": map[string]string{}},
+			[]string{"m1", "m2", "m3"},
 			map[string]interface{}{"m2": map[string]string{"foo": "hi"}},
 		},
 		{
-			map[string]interface{}{"sl1": sl, "sl2": []string{"sl"}},
-			[]string{"sl1", "sl2"},
+			map[string]interface{}{"sl1": sl, "sl2": []string{"sl"}, "sl3": []int{}},
+			[]string{"sl1", "sl2", "sl3"},
 			map[string]interface{}{"sl2": []string{"sl"}},
 		},
 		{

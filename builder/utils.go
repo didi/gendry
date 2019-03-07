@@ -142,7 +142,9 @@ func isZero(v reflect.Value) bool {
 		return v.Int() == 0
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		return v.Uint() == 0
-	case reflect.Map, reflect.Slice, reflect.Interface:
+	case reflect.Map, reflect.Slice:
+		return v.IsNil() || v.Len() == 0
+	case reflect.Interface:
 		return v.IsNil()
 	case reflect.Invalid:
 		return true
