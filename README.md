@@ -87,6 +87,18 @@ result, err = AggregateQuery(ctx, db, "tableName", where, AggregateAvg("score"))
 averageScore := result.Float64()
 ```
 
+If you want to clear the zero value in the where map, you can use builder.OmitEmpty
+``` go
+where := map[string]interface{}{
+		"score": 0,
+		"age >": 35,
+	}
+finalWhere := builder.OmitEmpty(where, []string{"score", "age"})
+// finalWhere = map[string]interface{}{"age >": 35}
+
+// support: Bool, Array, String, Float32, Float64, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Uintptr, Map, Slice, Interface, Struct
+```
+
 For complex queries, `NamedQuery` may be helpful:
 ```go
 cond, vals, err := builder.NamedQuery("select * from tb where name={{name}} and id in (select uid from anothertable where score in {{m_score}})", map[string]interface{}{
