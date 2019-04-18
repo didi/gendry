@@ -171,6 +171,34 @@ func buildIn(field string, vals []interface{}) (cond string) {
 	return
 }
 
+//NotIn means not in
+type NotIn map[string][]interface{}
+
+//Build implements the Comparable interface
+func (i NotIn) Build() ([]string, []interface{}) {
+	if nil == i || 0 == len(i) {
+		return nil, nil
+	}
+	var cond []string
+	var vals []interface{}
+	for k := range i {
+		cond = append(cond, k)
+	}
+	defaultSortAlgorithm(cond)
+	for j := 0; j < len(cond); j++ {
+		val := i[cond[j]]
+		cond[j] = buildNotIn(cond[j], val)
+		vals = append(vals, val...)
+	}
+	return cond, vals
+}
+
+func buildNotIn(field string, vals []interface{}) (cond string) {
+	cond = strings.TrimRight(strings.Repeat("?,", len(vals)), ",")
+	cond = fmt.Sprintf("%s NOT IN (%s)", quoteField(field), cond)
+	return
+}
+
 func build(m map[string]interface{}, op string) ([]string, []interface{}) {
 	if nil == m || 0 == len(m) {
 		return nil, nil

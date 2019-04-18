@@ -229,15 +229,16 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, func(), err
 }
 
 const (
-	opEq   = "="
-	opNe1  = "!="
-	opNe2  = "<>"
-	opIn   = "in"
-	opGt   = ">"
-	opGte  = ">="
-	opLt   = "<"
-	opLte  = "<="
-	opLike = "like"
+	opEq    = "="
+	opNe1   = "!="
+	opNe2   = "<>"
+	opIn    = "in"
+	opNotIn = "not in"
+	opGt    = ">"
+	opGte   = ">="
+	opLt    = "<"
+	opLte   = "<="
+	opLike  = "like"
 	// special
 	opNull = "null"
 )
@@ -261,6 +262,13 @@ var op2Comparable = map[string]compareProducer{
 		}
 		return In(wp), nil
 	},
+	opNotIn: func(m map[string]interface{}) (Comparable, error) {
+		wp, err := convertWhereMapToWhereMapSlice(m)
+		if nil != err {
+			return nil, err
+		}
+		return NotIn(wp), nil
+	},
 	opGt: func(m map[string]interface{}) (Comparable, error) {
 		return Gt(m), nil
 	},
@@ -281,7 +289,7 @@ var op2Comparable = map[string]compareProducer{
 	},
 }
 
-var opOrder = []string{opEq, opIn, opNe1, opNe2, opGt, opGte, opLt, opLte, opLike, opNull}
+var opOrder = []string{opEq, opIn, opNe1, opNe2, opNotIn, opGt, opGte, opLt, opLte, opLike, opNull}
 
 func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
 	cpArr, release := getCpPool()
