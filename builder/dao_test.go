@@ -198,7 +198,7 @@ func TestBuildInsert(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		actualStr, actualVals, err := buildInsert(tc.table, tc.data)
+		actualStr, actualVals, err := buildInsert(tc.table, tc.data, CommonInsert)
 		ass.Equal(tc.outErr, err)
 		ass.Equal(tc.outStr, actualStr)
 		ass.Equal(tc.outVals, actualVals)
