@@ -768,3 +768,21 @@ func TestBuildSelect_Limit(t *testing.T) {
 		}
 	}
 }
+
+func Test_NotIn(t *testing.T) {
+	where := map[string]interface{}{
+		"city in":            []string{"beijing", "shanghai"},
+		"age >":              35,
+		"address":            IsNotNull,
+		" hobbies not in   ": []string{"baseball", "swim", "running"},
+		"_groupby":           "department",
+		"_orderby":           "bonus desc",
+	}
+	table := "some_table"
+	selectFields := []string{"name", "age", "sex"}
+	cond, _, err := BuildSelect(table, where, selectFields)
+	ass := assert.New(t)
+	ass.NoError(err)
+	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC`
+	ass.Equal(expect, cond)
+}
