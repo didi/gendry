@@ -283,15 +283,15 @@ func quoteField(field string) string {
 	return field
 }
 
-type InsertType string
+type insertType string
 
 const (
-	CommonInsert  InsertType = "INSERT INTO"
-	IgnoreInsert  InsertType = "INSERT IGNORE INTO"
-	ReplaceInsert InsertType = "REPLACE INTO"
+	commonInsert  insertType = "INSERT INTO"
+	ignoreInsert  insertType = "INSERT IGNORE INTO"
+	replaceInsert insertType = "REPLACE INTO"
 )
 
-func buildInsert(table string, setMap []map[string]interface{}, insertType InsertType) (string, []interface{}, error) {
+func buildInsert(table string, setMap []map[string]interface{}, insertType insertType) (string, []interface{}, error) {
 	format := "%s %s (%s) VALUES %s"
 	var fields []string
 	var vals []interface{}

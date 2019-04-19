@@ -184,6 +184,46 @@ cond, vals, err := qb.BuildInsert(table, data)
 db.Exec(cond, vals...)
 ```
 
+#### `BuildInsertIgnore`
+
+sign: `BuildInsertIgnore(table string, data []map[string]interface{}) (string, []interface{}, error)`
+
+data is a slice and every element(map) in it must have the same keys:
+
+``` go
+var data []map[string]interface{}
+data = append(data, map[string]interface{}{
+    "name": "deen",
+    "age":  23,
+})
+data = append(data, map[string]interface{}{
+    "name": "Tony",
+    "age":  30,
+})
+cond, vals, err := qb.BuildInsertIgnore(table, data)
+db.Exec(cond, vals...)
+```
+
+#### `BuildReplaceInsert`
+
+sign: `BuildReplaceInsert(table string, data []map[string]interface{}) (string, []interface{}, error)`
+
+data is a slice and every element(map) in it must have the same keys:
+
+``` go
+var data []map[string]interface{}
+data = append(data, map[string]interface{}{
+    "name": "deen",
+    "age":  23,
+})
+data = append(data, map[string]interface{}{
+    "name": "Tony",
+    "age":  30,
+})
+cond, vals, err := qb.BuildReplaceInsert(table, data)
+db.Exec(cond, vals...)
+```
+
 #### `NamedQuery`
 
 sign: `func NamedQuery(sql string, data map[string]interface{}) (string, []interface{}, error)`

@@ -170,7 +170,7 @@ func TestWhereConnector(t *testing.T) {
 func TestBuildInsert(t *testing.T) {
 	var data = []struct {
 		table      string
-		insertType InsertType
+		insertType insertType
 		data       []map[string]interface{}
 		outStr     string
 		outVals    []interface{}
@@ -178,7 +178,7 @@ func TestBuildInsert(t *testing.T) {
 	}{
 		{
 			table:      "tb1",
-			insertType: CommonInsert,
+			insertType: commonInsert,
 			data: []map[string]interface{}{
 				{
 					"foo": 1,
@@ -199,7 +199,7 @@ func TestBuildInsert(t *testing.T) {
 		},
 		{
 			table:      "tb1",
-			insertType: ReplaceInsert,
+			insertType: replaceInsert,
 			data: []map[string]interface{}{
 				{
 					"foo": 1,
@@ -220,7 +220,7 @@ func TestBuildInsert(t *testing.T) {
 		},
 		{
 			table:      "tb1",
-			insertType: IgnoreInsert,
+			insertType: ignoreInsert,
 			data: []map[string]interface{}{
 				{
 					"foo": 1,
