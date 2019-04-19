@@ -185,8 +185,8 @@ func BuildInsertIgnore(table string, data []map[string]interface{}) (string, []i
 	return buildInsert(table, data, IgnoreInsert)
 }
 
-// BuildReplace work as its name says
-func BuildReplace(table string, data []map[string]interface{}) (string, []interface{}, error) {
+// BuildReplaceInsert work as its name says
+func BuildReplaceInsert(table string, data []map[string]interface{}) (string, []interface{}, error) {
 	return buildInsert(table, data, ReplaceInsert)
 }
 
