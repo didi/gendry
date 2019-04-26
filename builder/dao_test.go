@@ -169,14 +169,16 @@ func TestWhereConnector(t *testing.T) {
 
 func TestBuildInsert(t *testing.T) {
 	var data = []struct {
-		table   string
-		data    []map[string]interface{}
-		outStr  string
-		outVals []interface{}
-		outErr  error
+		table      string
+		insertType insertType
+		data       []map[string]interface{}
+		outStr     string
+		outVals    []interface{}
+		outErr     error
 	}{
 		{
-			table: "tb1",
+			table:      "tb1",
+			insertType: commonInsert,
 			data: []map[string]interface{}{
 				{
 					"foo": 1,
@@ -195,10 +197,52 @@ func TestBuildInsert(t *testing.T) {
 			outVals: []interface{}{2, 1, 4, 3, 6, 5},
 			outErr:  nil,
 		},
+		{
+			table:      "tb1",
+			insertType: replaceInsert,
+			data: []map[string]interface{}{
+				{
+					"foo": 1,
+					"bar": 2,
+				},
+				{
+					"foo": 3,
+					"bar": 4,
+				},
+				{
+					"foo": 5,
+					"bar": 6,
+				},
+			},
+			outStr:  "REPLACE INTO tb1 (bar,foo) VALUES (?,?),(?,?),(?,?)",
+			outVals: []interface{}{2, 1, 4, 3, 6, 5},
+			outErr:  nil,
+		},
+		{
+			table:      "tb1",
+			insertType: ignoreInsert,
+			data: []map[string]interface{}{
+				{
+					"foo": 1,
+					"bar": 2,
+				},
+				{
+					"foo": 3,
+					"bar": 4,
+				},
+				{
+					"foo": 5,
+					"bar": 6,
+				},
+			},
+			outStr:  "INSERT IGNORE INTO tb1 (bar,foo) VALUES (?,?),(?,?),(?,?)",
+			outVals: []interface{}{2, 1, 4, 3, 6, 5},
+			outErr:  nil,
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		actualStr, actualVals, err := buildInsert(tc.table, tc.data)
+		actualStr, actualVals, err := buildInsert(tc.table, tc.data, tc.insertType)
 		ass.Equal(tc.outErr, err)
 		ass.Equal(tc.outStr, actualStr)
 		ass.Equal(tc.outVals, actualVals)
