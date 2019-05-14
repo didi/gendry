@@ -603,6 +603,70 @@ func Test_Slice_2_Float(t *testing.T) {
 	}
 }
 
+func Test_int64_2_bool(t *testing.T) {
+	type user struct {
+		Name   string `ddb:"name"`
+		IsGirl bool   `ddb:"ig"`
+	}
+	var testData = []struct {
+		in  map[string]interface{}
+		out user
+		err error
+	}{
+		{
+			in: map[string]interface{}{
+				"name": "foo",
+				"ig":   int64(1),
+			},
+			out: user{
+				Name:   "foo",
+				IsGirl: true,
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
+				"ig":   []uint8("10"),
+			},
+			out: user{
+				Name:   "bar",
+				IsGirl: true,
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
+				"ig":   int64(0),
+			},
+			out: user{
+				Name:   "bar",
+				IsGirl: false,
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
+				"ig":   []byte("-1"),
+			},
+			out: user{
+				Name:   "bar",
+				IsGirl: false,
+			},
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range testData {
+		var u user
+		err := bind(tc.in, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.Equal(tc.out, u)
+	}
+}
+
 func Test_uint8_2_any(t *testing.T) {
 	type user struct {
 		Name  string  `ddb:"name"`

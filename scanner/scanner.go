@@ -375,6 +375,13 @@ func convert(mapValue interface{}, valuei reflect.Value, wrapErr convertErrWrapp
 			valuei.SetInt(mapValue.(int64))
 		} else if isUintSeriesType(vit.Kind()) {
 			valuei.SetUint(uint64(mapValue.(int64)))
+		} else if vit.Kind() == reflect.Bool {
+			v := mapValue.(int64)
+			if v > 0 {
+				valuei.SetBool(true)
+			} else {
+				valuei.SetBool(false)
+			}
 		} else {
 			return wrapErr(mvt, vit)
 		}
@@ -426,6 +433,16 @@ func handleConvertSlice(mapValue interface{}, mvt, vit reflect.Type, valuei *ref
 			return wrapErr(mvt, vit)
 		}
 		valuei.SetFloat(floatVal)
+	case vitKind == reflect.Bool:
+		intVal, err := strconv.ParseInt(mapValueStr, 10, 64)
+		if nil != err {
+			return wrapErr(mvt, vit)
+		}
+		if intVal > 0 {
+			valuei.SetBool(true)
+		} else {
+			valuei.SetBool(false)
+		}
 	default:
 		if _, ok := valuei.Interface().(ByteUnmarshaler); ok {
 			return byteUnmarshal(mapValueSlice, valuei, wrapErr)
