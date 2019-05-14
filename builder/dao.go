@@ -283,8 +283,16 @@ func quoteField(field string) string {
 	return field
 }
 
-func buildInsert(table string, setMap []map[string]interface{}) (string, []interface{}, error) {
-	format := "INSERT INTO %s (%s) VALUES %s"
+type insertType string
+
+const (
+	commonInsert  insertType = "INSERT INTO"
+	ignoreInsert  insertType = "INSERT IGNORE INTO"
+	replaceInsert insertType = "REPLACE INTO"
+)
+
+func buildInsert(table string, setMap []map[string]interface{}, insertType insertType) (string, []interface{}, error) {
+	format := "%s %s (%s) VALUES %s"
 	var fields []string
 	var vals []interface{}
 	if len(setMap) < 1 {
@@ -303,7 +311,7 @@ func buildInsert(table string, setMap []map[string]interface{}) (string, []inter
 			vals = append(vals, val)
 		}
 	}
-	return fmt.Sprintf(format, quoteField(table), strings.Join(fields, ","), strings.Join(sets, ",")), vals, nil
+	return fmt.Sprintf(format, insertType, quoteField(table), strings.Join(fields, ","), strings.Join(sets, ",")), vals, nil
 }
 
 func buildUpdate(table string, update map[string]interface{}, conditions ...Comparable) (string, []interface{}, error) {

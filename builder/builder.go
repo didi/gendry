@@ -177,7 +177,17 @@ func BuildDelete(table string, where map[string]interface{}) (string, []interfac
 
 // BuildInsert work as its name says
 func BuildInsert(table string, data []map[string]interface{}) (string, []interface{}, error) {
-	return buildInsert(table, data)
+	return buildInsert(table, data, commonInsert)
+}
+
+// BuildInsertIgnore work as its name says
+func BuildInsertIgnore(table string, data []map[string]interface{}) (string, []interface{}, error) {
+	return buildInsert(table, data, ignoreInsert)
+}
+
+// BuildReplaceInsert work as its name says
+func BuildReplaceInsert(table string, data []map[string]interface{}) (string, []interface{}, error) {
+	return buildInsert(table, data, replaceInsert)
 }
 
 var (
