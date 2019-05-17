@@ -101,7 +101,7 @@ where := map[string]interface{}{
 	"_orderby": "fieldName asc",
 	"_groupby": "fieldName",
 	"_having": map[string]interface{}{"foo":"bar",},
-	"_limit": []uint{begin,end},
+	"_limit": []uint{offset, row_count},
 }
 ```
 Note:
