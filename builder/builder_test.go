@@ -798,3 +798,48 @@ func Test_NotIn(t *testing.T) {
 	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC`
 	ass.Equal(expect, cond)
 }
+
+func TestBuildBetween(t *testing.T) {
+	where := map[string]interface{}{
+		"city in ":    []string{"beijing", "chengdu"},
+		"age between": []int{10, 30},
+		"name":        "caibirdme",
+	}
+	cond, vals, err := BuildSelect("tb", where, []string{"foo", "bar"})
+	ass := assert.New(t)
+	ass.NoError(err)
+	expectCond := `SELECT foo,bar FROM tb WHERE (name=? AND city IN (?,?) AND (age BETWEEN ? AND ?))`
+	ass.Equal(expectCond, cond)
+	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 10, 30}, vals)
+}
+
+func TestBuildNotBetween(t *testing.T) {
+	where := map[string]interface{}{
+		"city in ":        []string{"beijing", "chengdu"},
+		"age not between": []int{10, 30},
+		"name":            "caibirdme",
+		"_limit":          []uint{10, 20},
+	}
+	cond, vals, err := BuildSelect("tb", where, []string{"foo", "bar"})
+	ass := assert.New(t)
+	ass.NoError(err)
+	expectCond := `SELECT foo,bar FROM tb WHERE (name=? AND city IN (?,?) AND (age NOT BETWEEN ? AND ?)) LIMIT 10,20`
+	ass.Equal(expectCond, cond)
+	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 10, 30}, vals)
+}
+
+func TestBuildCombinedBetween(t *testing.T) {
+	where := map[string]interface{}{
+		"city in ":        []string{"beijing", "chengdu"},
+		"age not between": []int{10, 30},
+		"name":            "caibirdme",
+		"score between":   []float64{3.5, 7.2},
+		"_limit":          []uint{10, 20},
+	}
+	cond, vals, err := BuildSelect("tb", where, []string{"foo", "bar"})
+	ass := assert.New(t)
+	ass.NoError(err)
+	expectCond := `SELECT foo,bar FROM tb WHERE (name=? AND city IN (?,?) AND (score BETWEEN ? AND ?) AND (age NOT BETWEEN ? AND ?)) LIMIT 10,20`
+	ass.Equal(expectCond, cond)
+	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 3.5, 7.2, 10, 30}, vals)
+}

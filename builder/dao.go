@@ -15,7 +15,9 @@ var (
 
 //the order of a map is unpredicatable so we need a sort algorithm to sort the fields
 //and make it predicatable
-var defaultSortAlgorithm = sort.Strings
+var (
+	defaultSortAlgorithm = sort.Strings
+)
 
 //Comparable requires type implements the Build method
 type Comparable interface {
@@ -197,6 +199,53 @@ func buildNotIn(field string, vals []interface{}) (cond string) {
 	cond = strings.TrimRight(strings.Repeat("?,", len(vals)), ",")
 	cond = fmt.Sprintf("%s NOT IN (%s)", quoteField(field), cond)
 	return
+}
+
+type Between map[string][]interface{}
+
+func (bt Between) Build() ([]string, []interface{}) {
+	return betweenBuilder(bt, false)
+}
+
+func betweenBuilder(bt map[string][]interface{}, notBetween bool) ([]string, []interface{}) {
+	if bt == nil || len(bt) == 0 {
+		return nil, nil
+	}
+	var cond []string
+	var vals []interface{}
+	for k := range bt {
+		cond = append(cond, k)
+	}
+	defaultSortAlgorithm(cond)
+	for j := 0; j < len(cond); j++ {
+		val := bt[cond[j]]
+		cond_j, err := buildBetween(notBetween, cond[j], val)
+		if nil != err {
+			continue
+		}
+		cond[j] = cond_j
+		vals = append(vals, val...)
+	}
+	return cond, vals
+}
+
+type NotBetween map[string][]interface{}
+
+func (nbt NotBetween) Build() ([]string, []interface{}) {
+	return betweenBuilder(nbt, true)
+}
+
+func buildBetween(notBetween bool, key string, vals []interface{}) (string, error) {
+	if len(vals) != 2 {
+		return "", errors.New("vals of between must be a slice with two elements")
+	}
+	var operator string
+	if notBetween {
+		operator = "NOT BETWEEN"
+	} else {
+		operator = "BETWEEN"
+	}
+	return fmt.Sprintf("(%s %s ? AND ?)", key, operator), nil
 }
 
 func build(m map[string]interface{}, op string) ([]string, []interface{}) {
