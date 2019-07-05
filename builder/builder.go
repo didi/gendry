@@ -391,7 +391,7 @@ const (
 	paramPlaceHolder = "?"
 )
 
-var searchHandle = regexp.MustCompile(`{{\S+}}`)
+var searchHandle = regexp.MustCompile(`{{\S+?}}`)
 
 // NamedQuery is used for expressing complex query
 func NamedQuery(sql string, data map[string]interface{}) (string, []interface{}, error) {
