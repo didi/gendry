@@ -249,6 +249,7 @@ const (
 	opLt         = "<"
 	opLte        = "<="
 	opLike       = "like"
+	opNotLike    = "not like"
 	opBetween    = "between"
 	opNotBetween = "not between"
 	// special
@@ -310,12 +311,15 @@ var op2Comparable = map[string]compareProducer{
 	opLike: func(m map[string]interface{}) (Comparable, error) {
 		return Like(m), nil
 	},
+	opNotLike: func(m map[string]interface{}) (Comparable, error) {
+		return NotLike(m), nil
+	},
 	opNull: func(m map[string]interface{}) (Comparable, error) {
 		return nullCompareble(m), nil
 	},
 }
 
-var opOrder = []string{opEq, opIn, opNe1, opNe2, opNotIn, opGt, opGte, opLt, opLte, opLike, opBetween, opNotBetween, opNull}
+var opOrder = []string{opEq, opIn, opNe1, opNe2, opNotIn, opGt, opGte, opLt, opLte, opLike, opNotLike, opBetween, opNotBetween, opNull}
 
 func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
 	cpArr, release := getCpPool()
@@ -379,8 +383,26 @@ func splitKey(key string) (field string, operator string, err error) {
 	} else {
 		field = key[:idx]
 		operator = strings.Trim(key[idx+1:], " ")
+		operator = removeInnerSpace(operator)
 	}
 	return
+}
+
+func removeInnerSpace(operator string) string {
+	n := len(operator)
+	firstSpace := strings.IndexByte(operator, ' ')
+	if firstSpace == -1 {
+		return operator
+	}
+	lastSpace := firstSpace
+	for i := firstSpace+1; i<n; i++ {
+		if operator[i] == ' ' {
+			lastSpace = i
+		} else {
+			break
+		}
+	}
+	return operator[:firstSpace] + operator[lastSpace:]
 }
 
 func splitOrderBy(orderby string) ([]eleOrderBy, error) {

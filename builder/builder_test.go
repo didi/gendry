@@ -843,3 +843,28 @@ func TestBuildCombinedBetween(t *testing.T) {
 	ass.Equal(expectCond, cond)
 	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 3.5, 7.2, 10, 30}, vals)
 }
+
+func TestNotLike(t *testing.T) {
+	where := map[string]interface{}{
+		"name  not    like  ": "%ny",
+	}
+	cond, vals, err := BuildSelect("tb", where, nil)
+	ass := assert.New(t)
+	ass.NoError(err)
+	expectCond := `SELECT * FROM tb WHERE (name NOT LIKE ?)`
+	ass.Equal(expectCond, cond)
+	ass.Equal([]interface{}{"%ny"}, vals)
+}
+
+func TestNotLike_1(t *testing.T) {
+	where := map[string]interface{}{
+		"name  not like  ": "%ny",
+		"age": 20,
+	}
+	cond, vals, err := BuildSelect("tb", where, nil)
+	ass := assert.New(t)
+	ass.NoError(err)
+	expectCond := `SELECT * FROM tb WHERE (age=? AND name NOT LIKE ?)`
+	ass.Equal(expectCond, cond)
+	ass.Equal([]interface{}{20, "%ny"}, vals)
+}

@@ -97,6 +97,27 @@ func (l Like) Build() ([]string, []interface{}) {
 	return cond, vals
 }
 
+type NotLike map[string]interface{}
+
+// Build implements the Comparable interface
+func (l NotLike) Build() ([]string, []interface{}) {
+	if nil == l || 0 == len(l) {
+		return nil, nil
+	}
+	var cond []string
+	var vals []interface{}
+	for k := range l {
+		cond = append(cond, k)
+	}
+	defaultSortAlgorithm(cond)
+	for j := 0; j < len(cond); j++ {
+		val := l[cond[j]]
+		cond[j] = cond[j] + " NOT LIKE ?"
+		vals = append(vals, val)
+	}
+	return cond, vals
+}
+
 //Eq means equal(=)
 type Eq map[string]interface{}
 

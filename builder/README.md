@@ -77,8 +77,9 @@ operators supported:
 * !=
 * &lt;&gt;
 * in
-* not in`
+* not in
 * like
+* not like
 * between
 * not between
 
