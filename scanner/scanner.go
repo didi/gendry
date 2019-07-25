@@ -382,6 +382,8 @@ func convert(mapValue interface{}, valuei reflect.Value, wrapErr convertErrWrapp
 			} else {
 				valuei.SetBool(false)
 			}
+		} else if vit.Kind() == reflect.String {
+			valuei.SetString(strconv.FormatInt(mapValue.(int64), 10))
 		} else {
 			return wrapErr(mvt, vit)
 		}
