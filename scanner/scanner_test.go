@@ -667,6 +667,80 @@ func Test_int64_2_bool(t *testing.T) {
 	}
 }
 
+func Test_int64_2_string(t *testing.T) {
+	type user struct {
+		Name string `ddb:"name"`
+		Age  string `ddb:"age"`
+	}
+	var testData = []struct {
+		in  map[string]interface{}
+		out user
+		err error
+	}{
+		{
+			in: map[string]interface{}{
+				"name": "foo",
+				"age":  int64(1024),
+			},
+			out: user{
+				Name: "foo",
+				Age:  "1024",
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
+				"age":  []uint8("10"),
+			},
+			out: user{
+				Name: "bar",
+				Age:  "10",
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
+				"age":  int64(0),
+			},
+			out: user{
+				Name: "bar",
+				Age:  "0",
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
+				"age":  []byte("-1"),
+			},
+			out: user{
+				Name: "bar",
+				Age:  "-1",
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
+				"age":  int64(4294967296),
+			},
+			out: user{
+				Name: "bar",
+				Age:  "4294967296",
+			},
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range testData {
+		var u user
+		err := bind(tc.in, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.Equal(tc.out, u)
+	}
+}
+
 func Test_uint8_2_any(t *testing.T) {
 	type user struct {
 		Name  string  `ddb:"name"`
