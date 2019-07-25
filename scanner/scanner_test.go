@@ -720,6 +720,16 @@ func Test_int64_2_string(t *testing.T) {
 		{
 			in: map[string]interface{}{
 				"name": "bar",
+				"age":  int64(-1024),
+			},
+			out: user{
+				Name: "bar",
+				Age:  "-1024",
+			},
+		},
+		{
+			in: map[string]interface{}{
+				"name": "bar",
 				"age":  int64(4294967296),
 			},
 			out: user{
