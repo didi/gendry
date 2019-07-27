@@ -329,7 +329,7 @@ func Test_BuildSelect(t *testing.T) {
 
 func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		BuildSelect("tb", map[string]interface{}{
+		_,_,err := BuildSelect("tb", map[string]interface{}{
 			"foo":      "bar",
 			"qq":       "tt",
 			"age in":   []interface{}{1, 3, 5, 7, 9},
@@ -338,6 +338,9 @@ func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 			"_groupby": "department",
 			"_limit":   []uint{0, 100},
 		}, []string{"a", "b", "c"})
+		if err != nil {
+			b.FailNow()
+		}
 	}
 }
 
@@ -355,7 +358,7 @@ func BenchmarkBuildSelect_Parallel(b *testing.B) {
 				"_limit":   []uint{0, 100},
 			}, nil)
 			if cond != expectCond {
-				b.Errorf("should be %s but %s\n", expectCond, cond)
+				b.Fatalf("should be %s but %s\n", expectCond, cond)
 			}
 		}
 	})
