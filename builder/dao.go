@@ -293,18 +293,26 @@ func assembleExpression(field, op string) string {
 	return quoteField(field) + op + "?"
 }
 
-func orderBy(orderMap []eleOrderBy) (string, error) {
-	var orders []string
+// caller ensure that orderMap is not empty
+func orderBy(orderMap []eleOrderBy) (string, []interface{}, error) {
+	orders := 0
+	var vals []interface{}
 	for _, orderInfo := range orderMap {
 		realOrder := strings.ToUpper(orderInfo.order)
 		if realOrder != "ASC" && realOrder != "DESC" {
-			return "", errOrderByParam
+			return "", nil, errOrderByParam
 		}
-		order := fmt.Sprintf("%s %s", quoteField(orderInfo.field), realOrder)
-		orders = append(orders, order)
+		vals = append(vals, orderInfo.field, realOrder)
+		orders++
 	}
-	orderby := strings.Join(orders, ",")
-	return orderby, nil
+	if orders == 0 {
+		return "", nil, nil
+	}
+	if orders == 1 {
+		return "? ?", vals, nil
+	}
+	str := strings.Repeat("? ?,", orders)
+	return str[:len(str)-1], vals, nil
 }
 
 func resolveKV(m map[string]interface{}) (keys []string, vals []interface{}) {
@@ -428,7 +436,6 @@ func splitCondition(conditions []Comparable) ([]Comparable, []Comparable) {
 }
 
 func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleOrderBy, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
-	format := "SELECT %s FROM %s"
 	fields := "*"
 	if len(ufields) > 0 {
 		for i := range ufields {
@@ -436,29 +443,41 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 		}
 		fields = strings.Join(ufields, ",")
 	}
-	cond := fmt.Sprintf(format, fields, quoteField(table))
+	bd := strings.Builder{}
+	bd.WriteString("SELECT ")
+	bd.WriteString(fields)
+	bd.WriteString(" FROM ")
+	bd.WriteString(table)
 	where, having := splitCondition(conditions)
 	whereString, vals := whereConnector(where...)
 	if "" != whereString {
-		cond = fmt.Sprintf("%s WHERE %s", cond, whereString)
+		bd.WriteString(" WHERE ")
+		bd.WriteString(whereString)
 	}
 	if "" != groupBy {
-		cond = fmt.Sprintf("%s GROUP BY %s", cond, quoteField(groupBy))
+		bd.WriteString(" GROUP BY ?")
+		vals = append(vals, groupBy)
 	}
 	if nil != having {
 		havingString, havingVals := whereConnector(having...)
-		cond = fmt.Sprintf("%s HAVING %s", cond, havingString)
+		bd.WriteString(" HAVING ")
+		bd.WriteString(havingString)
 		vals = append(vals, havingVals...)
 	}
 	if len(uOrderBy) != 0 {
-		str, err := orderBy(uOrderBy)
+		str, orderVals, err := orderBy(uOrderBy)
 		if nil != err {
 			return "", nil, err
 		}
-		cond = fmt.Sprintf("%s ORDER BY %s", cond, str)
+		if str != "" {
+			bd.WriteString(" ORDER BY ")
+			bd.WriteString(str)
+			vals = append(vals, orderVals...)
+		}
 	}
 	if nil != limit {
-		cond = fmt.Sprintf("%s LIMIT %d,%d", cond, limit.begin, limit.step)
+		bd.WriteString(" LIMIT ?,?")
+		vals = append(vals, int(limit.begin), int(limit.step))
 	}
-	return cond, vals, nil
+	return bd.String(), vals, nil
 }

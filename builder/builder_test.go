@@ -50,8 +50,8 @@ func TestBuildHaving(t *testing.T) {
 				selectField: []string{"name, count(price) as total"},
 			},
 			out: outStruct{
-				cond: "SELECT name, count(price) as total FROM tb WHERE (age>?) GROUP BY name HAVING (total>=? AND total<?)",
-				vals: []interface{}{23, 1000, 50000},
+				cond: "SELECT name, count(price) as total FROM tb WHERE (age>?) GROUP BY ? HAVING (total>=? AND total<?)",
+				vals: []interface{}{23, "name", 1000, 50000},
 				err:  nil,
 			},
 		},
@@ -68,8 +68,8 @@ func TestBuildHaving(t *testing.T) {
 				selectField: []string{"name, count(price) as total"},
 			},
 			out: outStruct{
-				cond: "SELECT name, count(price) as total FROM tb GROUP BY name HAVING (total>=? AND total<?)",
-				vals: []interface{}{1000, 50000},
+				cond: "SELECT name, count(price) as total FROM tb GROUP BY ? HAVING (total>=? AND total<?)",
+				vals: []interface{}{"name", 1000, 50000},
 				err:  nil,
 			},
 		},
@@ -101,8 +101,8 @@ func TestBuildHaving(t *testing.T) {
 				selectField: []string{"name, age"},
 			},
 			out: outStruct{
-				cond: "SELECT name, age FROM tb WHERE (age IN (?,?,?)) LIMIT 0,1",
-				vals: []interface{}{1, 2, 3},
+				cond: "SELECT name, age FROM tb WHERE (age IN (?,?,?)) LIMIT ?,?",
+				vals: []interface{}{1, 2, 3, 0, 1},
 				err:  nil,
 			},
 		},
@@ -116,8 +116,8 @@ func TestBuildHaving(t *testing.T) {
 				selectField: []string{"name, age"},
 			},
 			out: outStruct{
-				cond: "SELECT name, age FROM tb WHERE (age IN (?,?,?)) LIMIT 2,1",
-				vals: []interface{}{1, 2, 3},
+				cond: "SELECT name, age FROM tb WHERE (age IN (?,?,?)) LIMIT ?,?",
+				vals: []interface{}{1, 2, 3, 2, 1},
 				err:  nil,
 			},
 		},
@@ -277,15 +277,15 @@ func Test_BuildSelect(t *testing.T) {
 					"qq":       "tt",
 					"age in":   []interface{}{1, 3, 5, 7, 9},
 					"faith <>": "Muslim",
-					"_orderby": "age desc",
+					"_orderby": "age desc, score asc",
 					"_groupby": "department",
 					"_limit":   []uint{0, 100},
 				},
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC LIMIT 0,100",
-				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY ? ORDER BY ? ?,? ? LIMIT ?,?",
+				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim", "department", "age", "DESC", "score", "ASC", 0, 100},
 				err:  nil,
 			},
 		},
@@ -342,7 +342,7 @@ func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 }
 
 func BenchmarkBuildSelect_Parallel(b *testing.B) {
-	expectCond := "SELECT * FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC LIMIT 0,100"
+	expectCond := "SELECT * FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY ? ORDER BY ? ? LIMIT ?,?"
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			cond, _, _ := BuildSelect("tb", map[string]interface{}{
@@ -578,8 +578,8 @@ func Test_BuildIN(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC",
-				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY ? ORDER BY ? ?",
+				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim", "department", "age", "DESC"},
 				err:  nil,
 			},
 		},
@@ -627,8 +627,53 @@ func Test_BuildOrderBy(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
-				vals: []interface{}{"bar"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?,? ?",
+				vals: []interface{}{"bar", "age", "DESC", "id", "ASC"},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"_orderby": "   age    desc,id     asc    ",
+				},
+				fields: []string{"id", "name", "age"},
+			},
+			out: outStruct{
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?,? ?",
+				vals: []interface{}{"bar", "age", "DESC", "id", "ASC"},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"_orderby": "   age    desc,   id     asc    ",
+				},
+				fields: []string{"id", "name", "age"},
+			},
+			out: outStruct{
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?,? ?",
+				vals: []interface{}{"bar", "age", "DESC", "id", "ASC"},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"_orderby": "   age    desc",
+				},
+				fields: []string{"id", "name", "age"},
+			},
+			out: outStruct{
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?",
+				vals: []interface{}{"bar", "age", "DESC"},
 				err:  nil,
 			},
 		},
@@ -731,52 +776,48 @@ func TestBuildSelect_Limit(t *testing.T) {
 	var testCase = []struct {
 		limit  []uint
 		err    error
-		expect string
+		expect []interface{}
 	}{
 		{
 			limit:  []uint{10, 20},
 			err:    nil,
-			expect: "LIMIT 10,20",
-		},
-		{
-			limit:  []uint{0, 10},
-			err:    nil,
-			expect: "LIMIT 0,10",
+			expect: []interface{}{10, 20},
 		},
 		{
 			limit:  []uint{0, 1},
 			err:    nil,
-			expect: "LIMIT 0,1",
+			expect: []interface{}{0, 1},
 		},
 		{
 			limit:  []uint{1},
 			err:    nil,
-			expect: "LIMIT 0,1",
+			expect: []interface{}{0, 1},
 		},
 		{
 			limit:  []uint{20, 10},
 			err:    nil,
-			expect: "LIMIT 20,10",
+			expect: []interface{}{20, 10},
 		},
 		{
 			limit:  []uint{},
 			err:    errLimitValueLength,
-			expect: "",
+			expect: nil,
 		},
 		{
 			limit:  []uint{1, 2, 3},
 			err:    errLimitValueLength,
-			expect: "",
+			expect: nil,
 		},
 	}
 	ass := assert.New(t)
 	for _, tc := range testCase {
-		cond, _, err := BuildSelect("tb", map[string]interface{}{
+		cond, vals, err := BuildSelect("tb", map[string]interface{}{
 			"_limit": tc.limit,
 		}, nil)
 		ass.Equal(tc.err, err)
 		if tc.err == nil {
-			ass.Equal(`SELECT * FROM tb `+tc.expect, cond, "where=%+v", tc.limit)
+			ass.Equal(`SELECT * FROM tb LIMIT ?,?`, cond, "where=%+v", tc.limit)
+			ass.Equal(tc.expect, vals)
 		}
 	}
 }
@@ -795,7 +836,7 @@ func Test_NotIn(t *testing.T) {
 	cond, _, err := BuildSelect(table, where, selectFields)
 	ass := assert.New(t)
 	ass.NoError(err)
-	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC`
+	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY ? ORDER BY ? ?`
 	ass.Equal(expect, cond)
 }
 
@@ -823,9 +864,9 @@ func TestBuildNotBetween(t *testing.T) {
 	cond, vals, err := BuildSelect("tb", where, []string{"foo", "bar"})
 	ass := assert.New(t)
 	ass.NoError(err)
-	expectCond := `SELECT foo,bar FROM tb WHERE (name=? AND city IN (?,?) AND (age NOT BETWEEN ? AND ?)) LIMIT 10,20`
+	expectCond := `SELECT foo,bar FROM tb WHERE (name=? AND city IN (?,?) AND (age NOT BETWEEN ? AND ?)) LIMIT ?,?`
 	ass.Equal(expectCond, cond)
-	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 10, 30}, vals)
+	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 10, 30, 10, 20}, vals)
 }
 
 func TestBuildCombinedBetween(t *testing.T) {
@@ -839,9 +880,9 @@ func TestBuildCombinedBetween(t *testing.T) {
 	cond, vals, err := BuildSelect("tb", where, []string{"foo", "bar"})
 	ass := assert.New(t)
 	ass.NoError(err)
-	expectCond := `SELECT foo,bar FROM tb WHERE (name=? AND city IN (?,?) AND (score BETWEEN ? AND ?) AND (age NOT BETWEEN ? AND ?)) LIMIT 10,20`
+	expectCond := `SELECT foo,bar FROM tb WHERE (name=? AND city IN (?,?) AND (score BETWEEN ? AND ?) AND (age NOT BETWEEN ? AND ?)) LIMIT ?,?`
 	ass.Equal(expectCond, cond)
-	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 3.5, 7.2, 10, 30}, vals)
+	ass.Equal([]interface{}{"caibirdme", "beijing", "chengdu", 3.5, 7.2, 10, 30, 10, 20}, vals)
 }
 
 func TestNotLike(t *testing.T) {

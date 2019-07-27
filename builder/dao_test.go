@@ -88,17 +88,19 @@ func TestOrderBy(t *testing.T) {
 	var data = []struct {
 		inOrderBy []eleOrderBy
 		outStr    string
+		outVals []interface{}
 		outErr    error
 	}{
-		{[]eleOrderBy{eleOrderBy{"age", "desc"}}, "age DESC", nil},
-		{[]eleOrderBy{eleOrderBy{"name", "Asc"}}, "name ASC", nil},
-		{[]eleOrderBy{eleOrderBy{"tt", "DesC"}}, "tt DESC", nil},
-		{[]eleOrderBy{eleOrderBy{"qq", "DESCC"}}, "", errOrderByParam},
+		{[]eleOrderBy{eleOrderBy{"age", "desc"}}, "? ?", []interface{}{"age", "DESC"}, nil},
+		{[]eleOrderBy{eleOrderBy{"name", "Asc"}}, "? ?", []interface{}{"name", "ASC"},nil},
+		{[]eleOrderBy{eleOrderBy{"tt", "DesC"}}, "? ?", []interface{}{"tt", "DESC"},nil},
+		{[]eleOrderBy{eleOrderBy{"qq", "DESCC"}}, "", nil,errOrderByParam},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		actual, err := orderBy(tc.inOrderBy)
+		actual, orderVals, err := orderBy(tc.inOrderBy)
 		ass.Equal(tc.outErr, err)
+		ass.Equal(tc.outVals, orderVals)
 		ass.Equal(tc.outStr, actual)
 	}
 }
@@ -340,14 +342,14 @@ func TestBuildSelect(t *testing.T) {
 				}),
 			},
 			groupBy: "",
-			orderBy: []eleOrderBy{eleOrderBy{field: "foo", order: "desc"}},
+			orderBy: []eleOrderBy{eleOrderBy{field: "foo", order: "desc"}, {"baz", "aSc"}},
 			limit: &eleLimit{
 				begin: 10,
 				step:  20,
 			},
 			outErr:  nil,
-			outStr:  "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND qq IN (?,?,?)) ORDER BY foo DESC LIMIT 10,20",
-			outVals: []interface{}{2, 1, 4, 5, 6},
+			outStr:  "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND qq IN (?,?,?)) ORDER BY ? ?,? ? LIMIT ?,?",
+			outVals: []interface{}{2, 1, 4, 5, 6, "foo", "DESC", "baz", "ASC", 10, 20},
 		},
 	}
 	ass := assert.New(t)
