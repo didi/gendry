@@ -294,25 +294,20 @@ func assembleExpression(field, op string) string {
 }
 
 // caller ensure that orderMap is not empty
-func orderBy(orderMap []eleOrderBy) (string, []interface{}, error) {
-	orders := 0
-	var vals []interface{}
+func orderBy(orderMap []eleOrderBy) (string, error) {
+	var str strings.Builder
 	for _, orderInfo := range orderMap {
 		realOrder := strings.ToUpper(orderInfo.order)
 		if realOrder != "ASC" && realOrder != "DESC" {
-			return "", nil, errOrderByParam
+			return "",  errOrderByParam
 		}
-		vals = append(vals, orderInfo.field, realOrder)
-		orders++
+		str.WriteString(orderInfo.field)
+		str.WriteByte(' ')
+		str.WriteString(realOrder)
+		str.WriteByte(',')
 	}
-	if orders == 0 {
-		return "", nil, nil
-	}
-	if orders == 1 {
-		return "? ?", vals, nil
-	}
-	str := strings.Repeat("? ?,", orders)
-	return str[:len(str)-1], vals, nil
+	finalSQL := str.String()
+	return finalSQL[:len(finalSQL)-1], nil
 }
 
 func resolveKV(m map[string]interface{}) (keys []string, vals []interface{}) {
@@ -455,8 +450,8 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 		bd.WriteString(whereString)
 	}
 	if "" != groupBy {
-		bd.WriteString(" GROUP BY ?")
-		vals = append(vals, groupBy)
+		bd.WriteString(" GROUP BY ")
+		bd.WriteString(groupBy)
 	}
 	if nil != having {
 		havingString, havingVals := whereConnector(having...)
@@ -465,14 +460,13 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 		vals = append(vals, havingVals...)
 	}
 	if len(uOrderBy) != 0 {
-		str, orderVals, err := orderBy(uOrderBy)
+		str, err := orderBy(uOrderBy)
 		if nil != err {
 			return "", nil, err
 		}
 		if str != "" {
 			bd.WriteString(" ORDER BY ")
 			bd.WriteString(str)
-			vals = append(vals, orderVals...)
 		}
 	}
 	if nil != limit {

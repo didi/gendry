@@ -50,8 +50,8 @@ func TestBuildHaving(t *testing.T) {
 				selectField: []string{"name, count(price) as total"},
 			},
 			out: outStruct{
-				cond: "SELECT name, count(price) as total FROM tb WHERE (age>?) GROUP BY ? HAVING (total>=? AND total<?)",
-				vals: []interface{}{23, "name", 1000, 50000},
+				cond: "SELECT name, count(price) as total FROM tb WHERE (age>?) GROUP BY name HAVING (total>=? AND total<?)",
+				vals: []interface{}{23,  1000, 50000},
 				err:  nil,
 			},
 		},
@@ -68,8 +68,8 @@ func TestBuildHaving(t *testing.T) {
 				selectField: []string{"name, count(price) as total"},
 			},
 			out: outStruct{
-				cond: "SELECT name, count(price) as total FROM tb GROUP BY ? HAVING (total>=? AND total<?)",
-				vals: []interface{}{"name", 1000, 50000},
+				cond: "SELECT name, count(price) as total FROM tb GROUP BY name HAVING (total>=? AND total<?)",
+				vals: []interface{}{1000, 50000},
 				err:  nil,
 			},
 		},
@@ -284,8 +284,8 @@ func Test_BuildSelect(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY ? ORDER BY ? ?,? ? LIMIT ?,?",
-				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim", "department", "age", "DESC", "score", "ASC", 0, 100},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,?",
+				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim", 0, 100},
 				err:  nil,
 			},
 		},
@@ -581,8 +581,8 @@ func Test_BuildIN(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY ? ORDER BY ? ?",
-				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim", "department", "age", "DESC"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC",
+				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim"},
 				err:  nil,
 			},
 		},
@@ -630,8 +630,8 @@ func Test_BuildOrderBy(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?,? ?",
-				vals: []interface{}{"bar", "age", "DESC", "id", "ASC"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
+				vals: []interface{}{"bar"},
 				err:  nil,
 			},
 		},
@@ -645,8 +645,8 @@ func Test_BuildOrderBy(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?,? ?",
-				vals: []interface{}{"bar", "age", "DESC", "id", "ASC"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
+				vals: []interface{}{"bar"},
 				err:  nil,
 			},
 		},
@@ -660,8 +660,8 @@ func Test_BuildOrderBy(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?,? ?",
-				vals: []interface{}{"bar", "age", "DESC", "id", "ASC"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
+				vals: []interface{}{"bar"},
 				err:  nil,
 			},
 		},
@@ -675,8 +675,8 @@ func Test_BuildOrderBy(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY ? ?",
-				vals: []interface{}{"bar", "age", "DESC"},
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC",
+				vals: []interface{}{"bar"},
 				err:  nil,
 			},
 		},
@@ -839,7 +839,7 @@ func Test_NotIn(t *testing.T) {
 	cond, _, err := BuildSelect(table, where, selectFields)
 	ass := assert.New(t)
 	ass.NoError(err)
-	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY ? ORDER BY ? ?`
+	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC`
 	ass.Equal(expect, cond)
 }
 
