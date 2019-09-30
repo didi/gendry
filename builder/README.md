@@ -77,7 +77,11 @@ operators supported:
 * !=
 * &lt;&gt;
 * in
+* not in
 * like
+* not like
+* between
+* not between
 
 ``` go
 where := map[string]interface{}{

@@ -15,7 +15,9 @@ var (
 
 //the order of a map is unpredicatable so we need a sort algorithm to sort the fields
 //and make it predicatable
-var defaultSortAlgorithm = sort.Strings
+var (
+	defaultSortAlgorithm = sort.Strings
+)
 
 //Comparable requires type implements the Build method
 type Comparable interface {
@@ -90,6 +92,27 @@ func (l Like) Build() ([]string, []interface{}) {
 	for j := 0; j < len(cond); j++ {
 		val := l[cond[j]]
 		cond[j] = cond[j] + " LIKE ?"
+		vals = append(vals, val)
+	}
+	return cond, vals
+}
+
+type NotLike map[string]interface{}
+
+// Build implements the Comparable interface
+func (l NotLike) Build() ([]string, []interface{}) {
+	if nil == l || 0 == len(l) {
+		return nil, nil
+	}
+	var cond []string
+	var vals []interface{}
+	for k := range l {
+		cond = append(cond, k)
+	}
+	defaultSortAlgorithm(cond)
+	for j := 0; j < len(cond); j++ {
+		val := l[cond[j]]
+		cond[j] = cond[j] + " NOT LIKE ?"
 		vals = append(vals, val)
 	}
 	return cond, vals
@@ -199,6 +222,53 @@ func buildNotIn(field string, vals []interface{}) (cond string) {
 	return
 }
 
+type Between map[string][]interface{}
+
+func (bt Between) Build() ([]string, []interface{}) {
+	return betweenBuilder(bt, false)
+}
+
+func betweenBuilder(bt map[string][]interface{}, notBetween bool) ([]string, []interface{}) {
+	if bt == nil || len(bt) == 0 {
+		return nil, nil
+	}
+	var cond []string
+	var vals []interface{}
+	for k := range bt {
+		cond = append(cond, k)
+	}
+	defaultSortAlgorithm(cond)
+	for j := 0; j < len(cond); j++ {
+		val := bt[cond[j]]
+		cond_j, err := buildBetween(notBetween, cond[j], val)
+		if nil != err {
+			continue
+		}
+		cond[j] = cond_j
+		vals = append(vals, val...)
+	}
+	return cond, vals
+}
+
+type NotBetween map[string][]interface{}
+
+func (nbt NotBetween) Build() ([]string, []interface{}) {
+	return betweenBuilder(nbt, true)
+}
+
+func buildBetween(notBetween bool, key string, vals []interface{}) (string, error) {
+	if len(vals) != 2 {
+		return "", errors.New("vals of between must be a slice with two elements")
+	}
+	var operator string
+	if notBetween {
+		operator = "NOT BETWEEN"
+	} else {
+		operator = "BETWEEN"
+	}
+	return fmt.Sprintf("(%s %s ? AND ?)", key, operator), nil
+}
+
 func build(m map[string]interface{}, op string) ([]string, []interface{}) {
 	if nil == m || 0 == len(m) {
 		return nil, nil
@@ -223,18 +293,21 @@ func assembleExpression(field, op string) string {
 	return quoteField(field) + op + "?"
 }
 
+// caller ensure that orderMap is not empty
 func orderBy(orderMap []eleOrderBy) (string, error) {
-	var orders []string
+	var str strings.Builder
 	for _, orderInfo := range orderMap {
 		realOrder := strings.ToUpper(orderInfo.order)
 		if realOrder != "ASC" && realOrder != "DESC" {
-			return "", errOrderByParam
+			return "",  errOrderByParam
 		}
-		order := fmt.Sprintf("%s %s", quoteField(orderInfo.field), realOrder)
-		orders = append(orders, order)
+		str.WriteString(orderInfo.field)
+		str.WriteByte(' ')
+		str.WriteString(realOrder)
+		str.WriteByte(',')
 	}
-	orderby := strings.Join(orders, ",")
-	return orderby, nil
+	finalSQL := str.String()
+	return finalSQL[:len(finalSQL)-1], nil
 }
 
 func resolveKV(m map[string]interface{}) (keys []string, vals []interface{}) {
@@ -358,7 +431,6 @@ func splitCondition(conditions []Comparable) ([]Comparable, []Comparable) {
 }
 
 func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleOrderBy, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
-	format := "SELECT %s FROM %s"
 	fields := "*"
 	if len(ufields) > 0 {
 		for i := range ufields {
@@ -366,18 +438,25 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 		}
 		fields = strings.Join(ufields, ",")
 	}
-	cond := fmt.Sprintf(format, fields, quoteField(table))
+	bd := strings.Builder{}
+	bd.WriteString("SELECT ")
+	bd.WriteString(fields)
+	bd.WriteString(" FROM ")
+	bd.WriteString(table)
 	where, having := splitCondition(conditions)
 	whereString, vals := whereConnector(where...)
 	if "" != whereString {
-		cond = fmt.Sprintf("%s WHERE %s", cond, whereString)
+		bd.WriteString(" WHERE ")
+		bd.WriteString(whereString)
 	}
 	if "" != groupBy {
-		cond = fmt.Sprintf("%s GROUP BY %s", cond, quoteField(groupBy))
+		bd.WriteString(" GROUP BY ")
+		bd.WriteString(groupBy)
 	}
 	if nil != having {
 		havingString, havingVals := whereConnector(having...)
-		cond = fmt.Sprintf("%s HAVING %s", cond, havingString)
+		bd.WriteString(" HAVING ")
+		bd.WriteString(havingString)
 		vals = append(vals, havingVals...)
 	}
 	if len(uOrderBy) != 0 {
@@ -385,10 +464,14 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 		if nil != err {
 			return "", nil, err
 		}
-		cond = fmt.Sprintf("%s ORDER BY %s", cond, str)
+		if str != "" {
+			bd.WriteString(" ORDER BY ")
+			bd.WriteString(str)
+		}
 	}
 	if nil != limit {
-		cond = fmt.Sprintf("%s LIMIT %d,%d", cond, limit.begin, limit.step)
+		bd.WriteString(" LIMIT ?,?")
+		vals = append(vals, int(limit.begin), int(limit.step))
 	}
-	return cond, vals, nil
+	return bd.String(), vals, nil
 }

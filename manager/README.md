@@ -19,20 +19,19 @@ What the manager does is providing a series of simple methods which help you set
 ```go
 
 import (
+	"net/url"
+	"database/sql"
 	"github.com/didi/gendry/manager"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
 var err error
-db,err = manager.New(dbName, user, password, host)
-		.Set(
-			SetCharset("utf8"),
-			SetParseTime(true),
-			SetLocal("UTC")
-		)
-		.Port(3307)
-		.Open(true)
+db, err = manager.New(dbName, user, password, host).Set(
+		manager.SetCharset("utf8"),
+		manager.SetParseTime(true),
+		manager.SetLoc(url.QueryEscape("Asia/Shanghai"))).Port(3306).Open(true)
+
 ```
 
 > `godoc` is a great tool for scanning the API documentation

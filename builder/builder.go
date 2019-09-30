@@ -239,16 +239,19 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, func(), err
 }
 
 const (
-	opEq    = "="
-	opNe1   = "!="
-	opNe2   = "<>"
-	opIn    = "in"
-	opNotIn = "not in"
-	opGt    = ">"
-	opGte   = ">="
-	opLt    = "<"
-	opLte   = "<="
-	opLike  = "like"
+	opEq         = "="
+	opNe1        = "!="
+	opNe2        = "<>"
+	opIn         = "in"
+	opNotIn      = "not in"
+	opGt         = ">"
+	opGte        = ">="
+	opLt         = "<"
+	opLte        = "<="
+	opLike       = "like"
+	opNotLike    = "not like"
+	opBetween    = "between"
+	opNotBetween = "not between"
 	// special
 	opNull = "null"
 )
@@ -279,6 +282,20 @@ var op2Comparable = map[string]compareProducer{
 		}
 		return NotIn(wp), nil
 	},
+	opBetween: func(m map[string]interface{}) (Comparable, error) {
+		wp, err := convertWhereMapToWhereMapSlice(m)
+		if nil != err {
+			return nil, err
+		}
+		return Between(wp), nil
+	},
+	opNotBetween: func(m map[string]interface{}) (Comparable, error) {
+		wp, err := convertWhereMapToWhereMapSlice(m)
+		if nil != err {
+			return nil, err
+		}
+		return NotBetween(wp), nil
+	},
 	opGt: func(m map[string]interface{}) (Comparable, error) {
 		return Gt(m), nil
 	},
@@ -294,12 +311,15 @@ var op2Comparable = map[string]compareProducer{
 	opLike: func(m map[string]interface{}) (Comparable, error) {
 		return Like(m), nil
 	},
+	opNotLike: func(m map[string]interface{}) (Comparable, error) {
+		return NotLike(m), nil
+	},
 	opNull: func(m map[string]interface{}) (Comparable, error) {
 		return nullCompareble(m), nil
 	},
 }
 
-var opOrder = []string{opEq, opIn, opNe1, opNe2, opNotIn, opGt, opGte, opLt, opLte, opLike, opNull}
+var opOrder = []string{opEq, opIn, opNe1, opNe2, opNotIn, opGt, opGte, opLt, opLte, opLike, opNotLike, opBetween, opNotBetween, opNull}
 
 func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
 	cpArr, release := getCpPool()
@@ -363,8 +383,26 @@ func splitKey(key string) (field string, operator string, err error) {
 	} else {
 		field = key[:idx]
 		operator = strings.Trim(key[idx+1:], " ")
+		operator = removeInnerSpace(operator)
 	}
 	return
+}
+
+func removeInnerSpace(operator string) string {
+	n := len(operator)
+	firstSpace := strings.IndexByte(operator, ' ')
+	if firstSpace == -1 {
+		return operator
+	}
+	lastSpace := firstSpace
+	for i := firstSpace+1; i<n; i++ {
+		if operator[i] == ' ' {
+			lastSpace = i
+		} else {
+			break
+		}
+	}
+	return operator[:firstSpace] + operator[lastSpace:]
 }
 
 func splitOrderBy(orderby string) ([]eleOrderBy, error) {
@@ -391,7 +429,7 @@ const (
 	paramPlaceHolder = "?"
 )
 
-var searchHandle = regexp.MustCompile(`{{\S+}}`)
+var searchHandle = regexp.MustCompile(`{{\S+?}}`)
 
 // NamedQuery is used for expressing complex query
 func NamedQuery(sql string, data map[string]interface{}) (string, []interface{}, error) {
