@@ -1056,7 +1056,7 @@ func TestScanMapDecode(t *testing.T) {
 					},
 					[]interface{}{
 						[]uint8("Paul Pogba"),
-						27,
+						int64(27),
 						[]uint8{0x38, 0x2E, 0x32, 0x37, 0x35},
 					},
 				},
@@ -1064,12 +1064,12 @@ func TestScanMapDecode(t *testing.T) {
 			expect: []map[string]interface{}{
 				map[string]interface{}{
 					"name":  "C.Ronaldo",
-					"age":   33,
+					"age":   int64(33),
 					"score": 9.85,
 				},
 				map[string]interface{}{
 					"name":  "Paul Pogba",
-					"age":   27,
+					"age":   int64(27),
 					"score": 8.275,
 				},
 			},
