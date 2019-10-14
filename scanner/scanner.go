@@ -112,7 +112,7 @@ func ScanMap(rows Rows) ([]map[string]interface{}, error) {
 }
 
 // ScanMapDecode returns the result in the form of []map[string]interface{}
-// If possible, it will convert []uint8 to int or float64, or it will convert
+// If possible, it will convert []uint8 to int64 or float64, or it will convert
 // []uint8 to string
 func ScanMapDecode(rows Rows) ([]map[string]interface{}, error) {
 	results, err := resolveDataFromRows(rows)
@@ -126,8 +126,8 @@ func ScanMapDecode(rows Rows) ([]map[string]interface{}, error) {
 				continue
 			}
 			s := string(rv)
-			//convert to int
-			intVal, err := strconv.Atoi(s)
+			//convert to int64
+			intVal, err := strconv.ParseInt(s,10,64)
 			if err == nil {
 				results[i][k] = intVal
 				continue
