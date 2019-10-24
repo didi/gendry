@@ -836,11 +836,12 @@ func Test_NotIn(t *testing.T) {
 	}
 	table := "some_table"
 	selectFields := []string{"name", "age", "sex"}
-	cond, _, err := BuildSelect(table, where, selectFields)
+	cond, vals, err := BuildSelect(table, where, selectFields)
 	ass := assert.New(t)
 	ass.NoError(err)
 	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC`
 	ass.Equal(expect, cond)
+	ass.Equal([]interface{}{"beijing", "shanghai", "baseball", "swim", "running", 35}, vals)
 }
 
 func TestBuildBetween(t *testing.T) {
