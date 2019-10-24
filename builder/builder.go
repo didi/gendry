@@ -349,12 +349,10 @@ func convertWhereMapToWhereMapSlice(where map[string]interface{}, op string) (ma
 	for key, val := range where {
 		vals, ok := convertInterfaceToMap(val)
 		if !ok {
-			errMsg := fmt.Sprintf(errWhereInterfaceSliceType, op)
-			return nil, errors.New(errMsg)
+			return nil, fmt.Errorf(errWhereInterfaceSliceType, op)
 		}
 		if 0 == len(vals) {
-			errMsg := fmt.Sprintf(errEmptySliceCondition, op)
-			return nil, errors.New(errMsg)
+			return nil, fmt.Errorf(errEmptySliceCondition, op)
 		}
 		result[key] = vals
 	}
