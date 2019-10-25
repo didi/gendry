@@ -51,7 +51,7 @@ func TestBuildHaving(t *testing.T) {
 			},
 			out: outStruct{
 				cond: "SELECT name, count(price) as total FROM tb WHERE (age>?) GROUP BY name HAVING (total>=? AND total<?)",
-				vals: []interface{}{23,  1000, 50000},
+				vals: []interface{}{23, 1000, 50000},
 				err:  nil,
 			},
 		},
@@ -329,7 +329,7 @@ func Test_BuildSelect(t *testing.T) {
 
 func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_,_,err := BuildSelect("tb", map[string]interface{}{
+		_, _, err := BuildSelect("tb", map[string]interface{}{
 			"foo":      "bar",
 			"qq":       "tt",
 			"age in":   []interface{}{1, 3, 5, 7, 9},
@@ -601,7 +601,7 @@ func Benchmark_BuildIN(b *testing.B) {
 		"age": []uint64{1, 3, 5, 7, 9},
 	}
 	for i := 0; i < b.N; i++ {
-		convertWhereMapToWhereMapSlice(where)
+		convertWhereMapToWhereMapSlice(where, opIn)
 	}
 }
 
@@ -836,11 +836,12 @@ func Test_NotIn(t *testing.T) {
 	}
 	table := "some_table"
 	selectFields := []string{"name", "age", "sex"}
-	cond, _, err := BuildSelect(table, where, selectFields)
+	cond, vals, err := BuildSelect(table, where, selectFields)
 	ass := assert.New(t)
 	ass.NoError(err)
 	expect := `SELECT name,age,sex FROM some_table WHERE (city IN (?,?) AND hobbies NOT IN (?,?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC`
 	ass.Equal(expect, cond)
+	ass.Equal([]interface{}{"beijing", "shanghai", "baseball", "swim", "running", 35}, vals)
 }
 
 func TestBuildBetween(t *testing.T) {
@@ -903,7 +904,7 @@ func TestNotLike(t *testing.T) {
 func TestNotLike_1(t *testing.T) {
 	where := map[string]interface{}{
 		"name  not like  ": "%ny",
-		"age": 20,
+		"age":              20,
 	}
 	cond, vals, err := BuildSelect("tb", where, nil)
 	ass := assert.New(t)

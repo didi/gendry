@@ -14,13 +14,14 @@ var (
 	errSplitOrderBy  = errors.New(`[builder] the value of _orderby should be "fieldName direction [,fieldName direction]"`)
 	// ErrUnsupportedOperator reports there's unsupported operators in where-condition
 	ErrUnsupportedOperator       = errors.New("[builder] unsupported operator")
-	errWhereInType               = errors.New(`[builder] the value of "xxx in" must be of []interface{} type`)
 	errGroupByValueType          = errors.New(`[builder] the value of "_groupby" must be of string type`)
 	errLimitValueType            = errors.New(`[builder] the value of "_limit" must be of []uint type`)
 	errLimitValueLength          = errors.New(`[builder] the value of "_limit" must contain one or two uint elements`)
-	errEmptyINCondition          = errors.New(`[builder] the value of "in" must contain at least one element`)
 	errHavingValueType           = errors.New(`[builder] the value of "_having" must be of map[string]interface{}`)
 	errHavingUnsupportedOperator = errors.New(`[builder] "_having" contains unsupported operator`)
+
+	errWhereInterfaceSliceType = `[builder] the value of "xxx %s" must be of []interface{} type`
+	errEmptySliceCondition     = `[builder] the value of "%s" must contain at least one element`
 )
 
 type whereMapSet struct {
@@ -269,28 +270,28 @@ var op2Comparable = map[string]compareProducer{
 		return Ne(m), nil
 	},
 	opIn: func(m map[string]interface{}) (Comparable, error) {
-		wp, err := convertWhereMapToWhereMapSlice(m)
+		wp, err := convertWhereMapToWhereMapSlice(m, opIn)
 		if nil != err {
 			return nil, err
 		}
 		return In(wp), nil
 	},
 	opNotIn: func(m map[string]interface{}) (Comparable, error) {
-		wp, err := convertWhereMapToWhereMapSlice(m)
+		wp, err := convertWhereMapToWhereMapSlice(m, opNotIn)
 		if nil != err {
 			return nil, err
 		}
 		return NotIn(wp), nil
 	},
 	opBetween: func(m map[string]interface{}) (Comparable, error) {
-		wp, err := convertWhereMapToWhereMapSlice(m)
+		wp, err := convertWhereMapToWhereMapSlice(m, opBetween)
 		if nil != err {
 			return nil, err
 		}
 		return Between(wp), nil
 	},
 	opNotBetween: func(m map[string]interface{}) (Comparable, error) {
-		wp, err := convertWhereMapToWhereMapSlice(m)
+		wp, err := convertWhereMapToWhereMapSlice(m, opNotBetween)
 		if nil != err {
 			return nil, err
 		}
@@ -343,15 +344,15 @@ func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
 	return cpArr, release, nil
 }
 
-func convertWhereMapToWhereMapSlice(where map[string]interface{}) (map[string][]interface{}, error) {
+func convertWhereMapToWhereMapSlice(where map[string]interface{}, op string) (map[string][]interface{}, error) {
 	result := make(map[string][]interface{})
 	for key, val := range where {
 		vals, ok := convertInterfaceToMap(val)
 		if !ok {
-			return nil, errWhereInType
+			return nil, fmt.Errorf(errWhereInterfaceSliceType, op)
 		}
 		if 0 == len(vals) {
-			return nil, errEmptyINCondition
+			return nil, fmt.Errorf(errEmptySliceCondition, op)
 		}
 		result[key] = vals
 	}
@@ -395,7 +396,7 @@ func removeInnerSpace(operator string) string {
 		return operator
 	}
 	lastSpace := firstSpace
-	for i := firstSpace+1; i<n; i++ {
+	for i := firstSpace + 1; i < n; i++ {
 		if operator[i] == ' ' {
 			lastSpace = i
 		} else {
