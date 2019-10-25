@@ -379,15 +379,13 @@ func splitKey(key string) (field string, operator string, err error) {
 		err = errSplitEmptyKey
 		return
 	}
-	idx := strings.IndexByte(key, ' ')
 	subMatch := opReg.FindStringSubmatch(key)
 	if len(subMatch) != 2 {
 		field = key
 		operator = "="
 	} else {
-		field = key[:idx]
 		operator = subMatch[1]
-		field = strings.TrimRight(key[:strings.LastIndex(key, " "+operator)], " ")
+		field = strings.TrimRight(key[:strings.LastIndex(key, operator)], " ")
 		operator = removeInnerSpace(operator)
 	}
 	return
