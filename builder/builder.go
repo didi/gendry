@@ -257,6 +257,8 @@ const (
 	opNull = "null"
 )
 
+var opReg = regexp.MustCompile(` (=|! ?=|< ?>|in|not +in|>|> ?=|<|< ?=|like|not +like|between|not +between)$`)
+
 type compareProducer func(m map[string]interface{}) (Comparable, error)
 
 var op2Comparable = map[string]compareProducer{
@@ -378,12 +380,14 @@ func splitKey(key string) (field string, operator string, err error) {
 		return
 	}
 	idx := strings.IndexByte(key, ' ')
-	if idx == -1 {
+	subMatch := opReg.FindStringSubmatch(key)
+	if len(subMatch) != 2 {
 		field = key
 		operator = "="
 	} else {
 		field = key[:idx]
-		operator = strings.Trim(key[idx+1:], " ")
+		operator = subMatch[1]
+		field = strings.TrimRight(key[:strings.LastIndex(key, " "+operator)], " ")
 		operator = removeInnerSpace(operator)
 	}
 	return

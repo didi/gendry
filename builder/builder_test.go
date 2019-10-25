@@ -345,7 +345,7 @@ func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 }
 
 func BenchmarkBuildSelect_Parallel(b *testing.B) {
-	expectCond := "SELECT * FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY ? ORDER BY ? ? LIMIT ?,?"
+	expectCond := "SELECT * FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC LIMIT ?,?"
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			cond, _, _ := BuildSelect("tb", map[string]interface{}{
