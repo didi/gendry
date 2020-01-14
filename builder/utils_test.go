@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
 
 func TestResultResolver(t *testing.T) {
