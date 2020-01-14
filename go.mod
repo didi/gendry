@@ -1,4 +1,4 @@
-module github.com/didi/gendry/gendry
+module github.com/didi/gendry
 
 go 1.13
 
