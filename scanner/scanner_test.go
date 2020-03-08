@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -800,6 +801,102 @@ func Test_uint8_2_any(t *testing.T) {
 	}
 }
 
+func Test_sql_scanner(t *testing.T) {
+	type user struct {
+		Name sql.NullString `ddb:"name"`
+	}
+
+	var testData = []struct {
+		in  interface{}
+		out sql.NullString
+		err error
+	}{
+		{
+			in: []byte("bob"),
+			out: sql.NullString{
+				String: "bob",
+				Valid:  true,
+			},
+			err: nil,
+		},
+		{
+			in:  nil,
+			out: sql.NullString{Valid: false},
+			err: nil,
+		},
+		{
+			in: 0xffff,
+			out: sql.NullString{
+				String: "65535",
+				Valid:  true,
+			},
+			err: nil,
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range testData {
+		var u user
+		mp := map[string]interface{}{
+			"name": tc.in,
+		}
+		err := bind(mp, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.Equal(tc.out, u.Name)
+	}
+}
+
+func Test_sql_scanner_with_pointer(t *testing.T) {
+	type user struct {
+		Name *sql.NullString `ddb:"name"`
+	}
+
+	var testData = []struct {
+		in  interface{}
+		out *sql.NullString
+		err error
+	}{
+		{
+			in: []byte("bob"),
+			out: &sql.NullString{
+				String: "bob",
+				Valid:  true,
+			},
+			err: nil,
+		},
+		{
+			in:  nil,
+			out: nil,
+			err: nil,
+		},
+		{
+			in: 0xffff,
+			out: &sql.NullString{
+				String: "65535",
+				Valid:  true,
+			},
+			err: nil,
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range testData {
+		var u user
+		mp := map[string]interface{}{
+			"name": tc.in,
+		}
+		err := bind(mp, &u)
+		if tc.err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
+		ass.Equal(tc.out, u.Name)
+	}
+}
+
 func TestTagSetOnlyOnce(t *testing.T) {
 	userDefinedTagName = "a"
 	SetTagName("foo")
@@ -807,7 +904,8 @@ func TestTagSetOnlyOnce(t *testing.T) {
 	userDefinedTagName = ""
 	SetTagName("foo")
 	assert.Equal(t, "foo", userDefinedTagName)
-
+	// restore default tag
+	userDefinedTagName = DefaultTagName
 }
 
 type fakeRows struct {

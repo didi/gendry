@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"database/sql"
 	"errors"
 	"reflect"
 	"strconv"
@@ -362,6 +363,10 @@ func convert(mapValue interface{}, valuei reflect.Value, wrapErr convertErrWrapp
 	switch assertT := mapValue.(type) {
 	case time.Time:
 		return handleConvertTime(assertT, mvt, vit, &valuei, wrapErr)
+	}
+
+	if scanner, ok := valuei.Addr().Interface().(sql.Scanner); ok {
+		return scanner.Scan(mapValue)
 	}
 
 	//according to go-mysql-driver/mysql, driver.Value type can only be:
