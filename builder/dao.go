@@ -269,6 +269,28 @@ func buildBetween(notBetween bool, key string, vals []interface{}) (string, erro
 	return fmt.Sprintf("(%s %s ? AND ?)", key, operator), nil
 }
 
+type NestWhere []Comparable
+
+func (nw NestWhere) Build() ([]string, []interface{}) {
+	var cond []string
+	var vals []interface{}
+	nestWhereString, nestWhereVals := whereConnector("AND", nw...)
+	cond = append(cond, nestWhereString)
+	vals = nestWhereVals
+	return cond, vals
+}
+
+type OrWhere []Comparable
+
+func (ow OrWhere) Build() ([]string, []interface{}) {
+	var cond []string
+	var vals []interface{}
+	orWhereString, orWhereVals := whereConnector("OR", ow...)
+	cond = append(cond, orWhereString)
+	vals = orWhereVals
+	return cond, vals
+}
+
 func build(m map[string]interface{}, op string) ([]string, []interface{}) {
 	if nil == m || 0 == len(m) {
 		return nil, nil
@@ -299,7 +321,7 @@ func orderBy(orderMap []eleOrderBy) (string, error) {
 	for _, orderInfo := range orderMap {
 		realOrder := strings.ToUpper(orderInfo.order)
 		if realOrder != "ASC" && realOrder != "DESC" {
-			return "",  errOrderByParam
+			return "", errOrderByParam
 		}
 		str.WriteString(orderInfo.field)
 		str.WriteByte(' ')
@@ -330,7 +352,7 @@ func resolveFields(m map[string]interface{}) []string {
 	return fields
 }
 
-func whereConnector(conditions ...Comparable) (string, []interface{}) {
+func whereConnector(andOr string, conditions ...Comparable) (string, []interface{}) {
 	if len(conditions) == 0 {
 		return "", nil
 	}
@@ -347,7 +369,7 @@ func whereConnector(conditions ...Comparable) (string, []interface{}) {
 	if 0 == len(where) {
 		return "", nil
 	}
-	whereString := "(" + strings.Join(where, " AND ") + ")"
+	whereString := "(" + strings.Join(where, " "+andOr+" ") + ")"
 	return whereString, values
 }
 
@@ -396,7 +418,7 @@ func buildUpdate(table string, update map[string]interface{}, conditions ...Comp
 	}
 	sets = strings.TrimRight(sets, ",")
 	cond := fmt.Sprintf(format, quoteField(table), sets)
-	whereString, whereVals := whereConnector(conditions...)
+	whereString, whereVals := whereConnector("AND", conditions...)
 	if "" != whereString {
 		cond = fmt.Sprintf("%s WHERE %s", cond, whereString)
 		vals = append(vals, whereVals...)
@@ -405,7 +427,7 @@ func buildUpdate(table string, update map[string]interface{}, conditions ...Comp
 }
 
 func buildDelete(table string, conditions ...Comparable) (string, []interface{}, error) {
-	whereString, vals := whereConnector(conditions...)
+	whereString, vals := whereConnector("AND", conditions...)
 	if "" == whereString {
 		return fmt.Sprintf("DELETE FROM %s", table), nil, nil
 	}
@@ -444,7 +466,7 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 	bd.WriteString(" FROM ")
 	bd.WriteString(table)
 	where, having := splitCondition(conditions)
-	whereString, vals := whereConnector(where...)
+	whereString, vals := whereConnector("AND", where...)
 	if "" != whereString {
 		bd.WriteString(" WHERE ")
 		bd.WriteString(whereString)
@@ -454,7 +476,7 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 		bd.WriteString(groupBy)
 	}
 	if nil != having {
-		havingString, havingVals := whereConnector(having...)
+		havingString, havingVals := whereConnector("AND", having...)
 		bd.WriteString(" HAVING ")
 		bd.WriteString(havingString)
 		vals = append(vals, havingVals...)
