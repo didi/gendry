@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"sync"
 )
 
 var (
@@ -110,18 +109,16 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 		}
 		delete(copiedWhere, "_limit")
 	}
-	conditions, release, err := getWhereConditions(copiedWhere)
+	conditions, err := getWhereConditions(copiedWhere)
 	if nil != err {
 		return
 	}
-	defer release()
 	if having != nil {
-		havingCondition, release1, err1 := getWhereConditions(having)
+		havingCondition, err1 := getWhereConditions(having)
 		if nil != err1 {
 			err = err1
 			return
 		}
-		defer release1()
 		conditions = append(conditions, nilComparable(0))
 		conditions = append(conditions, havingCondition...)
 	}
@@ -158,21 +155,19 @@ func resolveHaving(having interface{}) (map[string]interface{}, error) {
 
 // BuildUpdate work as its name says
 func BuildUpdate(table string, where map[string]interface{}, update map[string]interface{}) (string, []interface{}, error) {
-	conditions, release, err := getWhereConditions(where)
+	conditions, err := getWhereConditions(where)
 	if nil != err {
 		return "", nil, err
 	}
-	defer release()
 	return buildUpdate(table, update, conditions...)
 }
 
 // BuildDelete work as its name says
 func BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error) {
-	conditions, release, err := getWhereConditions(where)
+	conditions, err := getWhereConditions(where)
 	if nil != err {
 		return "", nil, err
 	}
-	defer release()
 	return buildDelete(table, conditions...)
 }
 
@@ -191,19 +186,6 @@ func BuildReplaceInsert(table string, data []map[string]interface{}) (string, []
 	return buildInsert(table, data, replaceInsert)
 }
 
-var (
-	cpPool = sync.Pool{
-		New: func() interface{} {
-			return make([]Comparable, 0)
-		},
-	}
-)
-
-func getCpPool() ([]Comparable, func()) {
-	obj := cpPool.Get().([]Comparable)
-	return obj[:0], func() { cpPool.Put(obj) }
-}
-
 func emptyFunc() {}
 
 func isStringInSlice(str string, arr []string) bool {
@@ -215,9 +197,9 @@ func isStringInSlice(str string, arr []string) bool {
 	return false
 }
 
-func getWhereConditions(where map[string]interface{}) ([]Comparable, func(), error) {
+func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 	if len(where) == 0 {
-		return nil, emptyFunc, nil
+		return nil, nil
 	}
 	wms := &whereMapSet{}
 	var field, operator string
@@ -225,10 +207,10 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, func(), err
 	for key, val := range where {
 		field, operator, err = splitKey(key)
 		if !isStringInSlice(operator, opOrder) {
-			return nil, emptyFunc, ErrUnsupportedOperator
+			return nil, ErrUnsupportedOperator
 		}
 		if nil != err {
-			return nil, emptyFunc, err
+			return nil, err
 		}
 		if _, ok := val.(NullType); ok {
 			operator = opNull
@@ -322,8 +304,8 @@ var op2Comparable = map[string]compareProducer{
 
 var opOrder = []string{opEq, opIn, opNe1, opNe2, opNotIn, opGt, opGte, opLt, opLte, opLike, opNotLike, opBetween, opNotBetween, opNull}
 
-func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
-	cpArr, release := getCpPool()
+func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, error) {
+	var cpArr []Comparable
 	for _, operator := range opOrder {
 		whereMap, ok := mapSet.set[operator]
 		if !ok {
@@ -331,17 +313,15 @@ func buildWhereCondition(mapSet *whereMapSet) ([]Comparable, func(), error) {
 		}
 		f, ok := op2Comparable[operator]
 		if !ok {
-			release()
-			return nil, emptyFunc, ErrUnsupportedOperator
+			return nil, ErrUnsupportedOperator
 		}
 		cp, err := f(whereMap)
 		if nil != err {
-			release()
-			return nil, emptyFunc, err
+			return nil, err
 		}
 		cpArr = append(cpArr, cp)
 	}
-	return cpArr, release, nil
+	return cpArr, nil
 }
 
 func convertWhereMapToWhereMapSlice(where map[string]interface{}, op string) (map[string][]interface{}, error) {
