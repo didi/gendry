@@ -232,6 +232,16 @@ func Test_BuildUpdate(t *testing.T) {
 					"foo":    "bar",
 					"age >=": 23,
 					"sex in": []interface{}{"male", "female"},
+					"_or": []map[string]interface{}{
+						{
+							"x1":    11,
+							"x2 >=": 45,
+						},
+						{
+							"x3":    "234",
+							"x4 <>": "tx2",
+						},
+					},
 				},
 				setData: map[string]interface{}{
 					"score":    50,
@@ -239,8 +249,8 @@ func Test_BuildUpdate(t *testing.T) {
 				},
 			},
 			out: outStruct{
-				cond: "UPDATE tb SET district=?,score=? WHERE (foo=? AND sex IN (?,?) AND age>=?)",
-				vals: []interface{}{"010", 50, "bar", "male", "female", 23},
+				cond: "UPDATE tb SET district=?,score=? WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND foo=? AND sex IN (?,?) AND age>=?)",
+				vals: []interface{}{"010", 50, 11, 45, "234", "tx2", "bar", "male", "female", 23},
 				err:  nil,
 			},
 		},
@@ -277,6 +287,26 @@ func Test_BuildSelect(t *testing.T) {
 					"qq":       "tt",
 					"age in":   []interface{}{1, 3, 5, 7, 9},
 					"faith <>": "Muslim",
+					"_or": []map[string]interface{}{
+						{
+							"aa": 11,
+							"bb": "xswl",
+						},
+						{
+							"cc":    "234",
+							"dd in": []interface{}{7, 8},
+							"_or": []map[string]interface{}{
+								{
+									"neeest_ee <>": "dw42",
+									"neeest_ff in": []interface{}{34, 59},
+								},
+								{
+									"neeest_gg":        1259,
+									"neeest_hh not in": []interface{}{358, 1245},
+								},
+							},
+						},
+					},
 					"_orderby": "age desc, score asc",
 					"_groupby": "department",
 					"_limit":   []uint{0, 100},
@@ -284,8 +314,8 @@ func Test_BuildSelect(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,?",
-				vals: []interface{}{"bar", "tt", 1, 3, 5, 7, 9, "Muslim", 0, 100},
+				cond: "SELECT id,name,age FROM tb WHERE (((aa=? AND bb=?) OR (((neeest_ff IN (?,?) AND neeest_ee!=?) OR (neeest_gg=? AND neeest_hh NOT IN (?,?))) AND cc=? AND dd IN (?,?))) AND foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,?",
+				vals: []interface{}{11, "xswl", 34, 59, "dw42", 1259, 358, 1245, "234", 7, 8, "bar", "tt", 1, 3, 5, 7, 9, "Muslim", 0, 100},
 				err:  nil,
 			},
 		},

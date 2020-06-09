@@ -54,6 +54,33 @@ func TestIn(t *testing.T) {
 	}
 }
 
+func TestNestWhere(t *testing.T) {
+	var testData = []struct {
+		in      NestWhere
+		outCond []string
+		outVals []interface{}
+	}{
+		{
+			in: NestWhere([]Comparable{
+				Eq(map[string]interface{}{
+					"aa": 3,
+				}),
+				Eq(map[string]interface{}{
+					"bb": 4,
+				}),
+			}),
+			outCond: []string{"(aa=? AND bb=?)"},
+			outVals: []interface{}{3, 4},
+		},
+	}
+	ass := assert.New(t)
+	for _, testCase := range testData {
+		cond, vals := testCase.in.Build()
+		ass.Equal(testCase.outCond, cond)
+		ass.Equal(testCase.outVals, vals)
+	}
+}
+
 func TestResolveFields(t *testing.T) {
 	ass := assert.New(t)
 	m := map[string]interface{}{
@@ -92,7 +119,7 @@ func TestOrderBy(t *testing.T) {
 	}{
 		{[]eleOrderBy{eleOrderBy{"age", "desc"}}, "age DESC", nil},
 		{[]eleOrderBy{eleOrderBy{"name", "Asc"}}, "name ASC", nil},
-		{[]eleOrderBy{eleOrderBy{"tt", "DesC"}}, "tt DESC",nil},
+		{[]eleOrderBy{eleOrderBy{"tt", "DesC"}}, "tt DESC", nil},
 		{[]eleOrderBy{eleOrderBy{"qq", "DESCC"}}, "", errOrderByParam},
 	}
 	ass := assert.New(t)
@@ -161,7 +188,7 @@ func TestWhereConnector(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		actualStr, actualVals := whereConnector(tc.in...)
+		actualStr, actualVals := whereConnector("AND", tc.in...)
 		ass.Equal(tc.outStr, actualStr)
 		ass.Equal(tc.outVals, actualVals)
 	}
@@ -338,6 +365,24 @@ func TestBuildSelect(t *testing.T) {
 				In(map[string][]interface{}{
 					"qq": {4, 5, 6},
 				}),
+				OrWhere([]Comparable{
+					NestWhere([]Comparable{
+						Eq(map[string]interface{}{
+							"aa": 3,
+						}),
+						Eq(map[string]interface{}{
+							"bb": 4,
+						}),
+					}),
+					NestWhere([]Comparable{
+						Eq(map[string]interface{}{
+							"cc": 7,
+						}),
+						Eq(map[string]interface{}{
+							"dd": 8,
+						}),
+					}),
+				}),
 			},
 			groupBy: "",
 			orderBy: []eleOrderBy{eleOrderBy{field: "foo", order: "desc"}, {"baz", "aSc"}},
@@ -346,8 +391,8 @@ func TestBuildSelect(t *testing.T) {
 				step:  20,
 			},
 			outErr:  nil,
-			outStr:  "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND qq IN (?,?,?)) ORDER BY foo DESC,baz ASC LIMIT ?,?",
-			outVals: []interface{}{2, 1, 4, 5, 6, 10, 20},
+			outStr:  "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND qq IN (?,?,?) AND ((aa=? AND bb=?) OR (cc=? AND dd=?))) ORDER BY foo DESC,baz ASC LIMIT ?,?",
+			outVals: []interface{}{2, 1, 4, 5, 6, 3, 4, 7, 8, 10, 20},
 		},
 	}
 	ass := assert.New(t)

@@ -13,6 +13,7 @@ var (
 	errSplitOrderBy  = errors.New(`[builder] the value of _orderby should be "fieldName direction [,fieldName direction]"`)
 	// ErrUnsupportedOperator reports there's unsupported operators in where-condition
 	ErrUnsupportedOperator       = errors.New("[builder] unsupported operator")
+	errOrValueType               = errors.New(`[builder] the value of "_or" must be of slice of map[string]interface{} type`)
 	errGroupByValueType          = errors.New(`[builder] the value of "_groupby" must be of string type`)
 	errLimitValueType            = errors.New(`[builder] the value of "_limit" must be of []uint type`)
 	errLimitValueLength          = errors.New(`[builder] the value of "_limit" must contain one or two uint elements`)
@@ -186,8 +187,6 @@ func BuildReplaceInsert(table string, data []map[string]interface{}) (string, []
 	return buildInsert(table, data, replaceInsert)
 }
 
-func emptyFunc() {}
-
 func isStringInSlice(str string, arr []string) bool {
 	for _, s := range arr {
 		if s == str {
@@ -202,9 +201,32 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 		return nil, nil
 	}
 	wms := &whereMapSet{}
+	var comparables []Comparable
 	var field, operator string
 	var err error
 	for key, val := range where {
+		if key == "_or" {
+			var (
+				orWheres          []map[string]interface{}
+				orWhereComparable []Comparable
+				ok                bool
+			)
+			if orWheres, ok = val.([]map[string]interface{}); !ok {
+				return nil, errOrValueType
+			}
+			for _, orWhere := range orWheres {
+				if orWhere == nil {
+					continue
+				}
+				orNestWhere, err := getWhereConditions(orWhere)
+				if nil != err {
+					return nil, err
+				}
+				orWhereComparable = append(orWhereComparable, NestWhere(orNestWhere))
+			}
+			comparables = append(comparables, OrWhere(orWhereComparable))
+			continue
+		}
 		field, operator, err = splitKey(key)
 		if !isStringInSlice(operator, opOrder) {
 			return nil, ErrUnsupportedOperator
@@ -217,8 +239,12 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 		}
 		wms.add(operator, field, val)
 	}
-
-	return buildWhereCondition(wms)
+	whereComparables, err := buildWhereCondition(wms)
+	if nil != err {
+		return nil, err
+	}
+	comparables = append(comparables, whereComparables...)
+	return comparables, nil
 }
 
 const (
