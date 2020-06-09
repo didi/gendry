@@ -233,11 +233,11 @@ func Test_BuildUpdate(t *testing.T) {
 					"age >=": 23,
 					"sex in": []interface{}{"male", "female"},
 					"_or": []map[string]interface{}{
-						map[string]interface{}{
+						{
 							"x1":    11,
 							"x2 >=": 45,
 						},
-						map[string]interface{}{
+						{
 							"x3":    "234",
 							"x4 <>": "tx2",
 						},
@@ -288,19 +288,19 @@ func Test_BuildSelect(t *testing.T) {
 					"age in":   []interface{}{1, 3, 5, 7, 9},
 					"faith <>": "Muslim",
 					"_or": []map[string]interface{}{
-						map[string]interface{}{
+						{
 							"aa": 11,
 							"bb": "xswl",
 						},
-						map[string]interface{}{
+						{
 							"cc":    "234",
 							"dd in": []interface{}{7, 8},
 							"_or": []map[string]interface{}{
-								map[string]interface{}{
+								{
 									"neeest_ee <>": "dw42",
 									"neeest_ff in": []interface{}{34, 59},
 								},
-								map[string]interface{}{
+								{
 									"neeest_gg":        1259,
 									"neeest_hh not in": []interface{}{358, 1245},
 								},

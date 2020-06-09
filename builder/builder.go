@@ -187,8 +187,6 @@ func BuildReplaceInsert(table string, data []map[string]interface{}) (string, []
 	return buildInsert(table, data, replaceInsert)
 }
 
-func emptyFunc() {}
-
 func isStringInSlice(str string, arr []string) bool {
 	for _, s := range arr {
 		if s == str {
@@ -214,16 +212,15 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 				ok                bool
 			)
 			if orWheres, ok = val.([]map[string]interface{}); !ok {
-				return nil, emptyFunc, errOrValueType
+				return nil, errOrValueType
 			}
 			for _, orWhere := range orWheres {
 				if orWhere == nil {
 					continue
 				}
-				orNestWhere, f, err := getWhereConditions(orWhere)
-				defer f() // ?
+				orNestWhere, err := getWhereConditions(orWhere)
 				if nil != err {
-					return nil, emptyFunc, err
+					return nil, err
 				}
 				orWhereComparable = append(orWhereComparable, NestWhere(orNestWhere))
 			}
@@ -242,12 +239,12 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 		}
 		wms.add(operator, field, val)
 	}
-	whereComparables, f, err := buildWhereCondition(wms)
+	whereComparables, err := buildWhereCondition(wms)
 	if nil != err {
-		return nil, emptyFunc, err
+		return nil, err
 	}
 	comparables = append(comparables, whereComparables...)
-	return comparables, f, nil
+	return comparables, nil
 }
 
 const (
