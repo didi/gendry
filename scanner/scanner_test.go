@@ -264,7 +264,7 @@ func Test_Bind_Slice_2_Time(t *testing.T) {
 	var tObj Whatever
 	ass := assert.New(t)
 	err := bind(data, &tObj)
-	ass.NoError(err, "time.Time should transform to string and bind to string type")
+	ass.NoError(err, "[]uint8 should try to cast to time.Time")
 	ass.Equal(now.Unix(), tObj.When.Unix())
 }
 
