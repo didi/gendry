@@ -23,9 +23,19 @@ func main() {
         panic(err)
     }
     mp := map[string]interface{}{
-    	"country": "China",
-    	"role": "driver",
-    	"age >": 45,
+        "country": "China",
+        "role": "driver",
+        "age >": 45,
+        "_or": []map[string]interface{}{
+            {
+                "x1":    11,
+                "x2 >=": 45,
+            },
+            {
+                "x3":    "234",
+                "x4 <>": "tx2",
+            },
+        },
         "_groupby": "name",
         "_having": map[string]interface{}{
             "total >": 1000,
@@ -35,13 +45,13 @@ func main() {
     }
     cond,vals,err := qb.BuildSelect("tableName", where, []string{"name", "count(price) as total", "age"})
     
-    //cond: SELECT name,count(price) as total,age FROM tableName WHERE (age>? AND country=? AND role=?) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age DESC
-    //vals: []interface{}{45, "China", "driver", 1000, 50000}
+    //cond: SELECT name,count(price) as total,age FROM tableName WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND country=? AND role=? AND age>?) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age DESC
+    //vals: []interface{}{11, 45, "234", "tx2", "China", "driver", 45, 1000, 50000}
 
 	if nil != err {
 		panic(err)
 	}	
-	
+
     rows,err := db.Query(cond, vals...)
     if nil != err {
         panic(err)
@@ -85,15 +95,16 @@ operators supported:
 
 ``` go
 where := map[string]interface{}{
-	"foo <>": "aha",
-	"bar <=": 45,
-	"sex in": []interface{}{"girl", "boy"},
-	"name like": "%James",
+    "foo <>": "aha",
+    "bar <=": 45,
+    "sex in": []interface{}{"girl", "boy"},
+    "name like": "%James",
 }
 ```
 
 others supported:
 
+* _or
 * _orderby
 * _groupby
 * _having
@@ -101,11 +112,21 @@ others supported:
 
 ``` go
 where := map[string]interface{}{
-	"age >": 100,
-	"_orderby": "fieldName asc",
-	"_groupby": "fieldName",
-	"_having": map[string]interface{}{"foo":"bar",},
-	"_limit": []uint{offset, row_count},
+    "age >": 100,
+    "_or": []map[string]interface{}{
+        {
+            "x1":    11,
+            "x2 >=": 45,
+        },
+        {
+            "x3":    "234",
+            "x4 <>": "tx2",
+        },
+    },
+    "_orderby": "fieldName asc",
+    "_groupby": "fieldName",
+    "_having": map[string]interface{}{"foo":"bar",},
+    "_limit": []uint{offset, row_count},
 }
 ```
 Note:
@@ -155,9 +176,19 @@ BuildUpdate is very likely to BuildSelect but it **doesn't support**:
 
 ``` go
 where := map[string]interface{}{
-	"foo <>": "aha",
-	"bar <=": 45,
-	"sex in": []interface{}{"girl", "boy"},
+    "foo <>": "aha",
+    "bar <=": 45,
+    "sex in": []interface{}{"girl", "boy"},
+    "_or": []map[string]interface{}{
+        {
+            "x1":    11,
+            "x2 >=": 45,
+        },
+        {
+            "x3":    "234",
+            "x4 <>": "tx2",
+        },
+    },
 }
 update := map[string]interface{}{
 	"role": "primaryschoolstudent",
