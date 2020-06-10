@@ -450,6 +450,12 @@ func handleConvertSlice(mapValue interface{}, mvt, vit reflect.Type, valuei *ref
 		} else {
 			valuei.SetBool(false)
 		}
+	case isTimeType(vit):
+		t, err := time.ParseInLocation(cTimeFormat, mapValueStr, time.Local)
+		if err != nil {
+			return wrapErr(mvt, vit)
+		}
+		valuei.Set(reflect.ValueOf(t))
 	default:
 		if _, ok := valuei.Interface().(ByteUnmarshaler); ok {
 			return byteUnmarshal(mapValueSlice, valuei, wrapErr)
@@ -457,6 +463,10 @@ func handleConvertSlice(mapValue interface{}, mvt, vit reflect.Type, valuei *ref
 		return wrapErr(mvt, vit)
 	}
 	return nil
+}
+
+func isTimeType(vit reflect.Type) bool {
+	return reflect.TypeOf(time.Time{}) == vit
 }
 
 // valuei Here is the type of ByteUnmarshaler

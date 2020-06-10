@@ -253,6 +253,21 @@ func Test_Bind_Time_2_String(t *testing.T) {
 	ass.Error(err, "time.Time could only bind to time.Time&string type %v", some)
 }
 
+func Test_Bind_Slice_2_Time(t *testing.T) {
+	type Whatever struct {
+		When time.Time `ddb:"create_time"`
+	}
+	now := time.Now()
+	var data = map[string]interface{}{
+		"create_time": []uint8(now.Format(cTimeFormat)),
+	}
+	var tObj Whatever
+	ass := assert.New(t)
+	err := bind(data, &tObj)
+	ass.NoError(err, "[]uint8 should try to cast to time.Time")
+	ass.Equal(now.Unix(), tObj.When.Unix())
+}
+
 func Test_ScanMap(t *testing.T) {
 	var testData = []struct {
 		rows *sqlmock.Rows
