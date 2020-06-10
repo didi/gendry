@@ -59,6 +59,16 @@ where := map[string]interface{}{
 	"score": 5,
 	"age >": 35,
 	"address": builder.IsNotNull,
+	"_or": []map[string]interface{}{
+		{
+			"x1":    11,
+			"x2 >=": 45,
+		},
+		{
+			"x3":    "234",
+			"x4 <>": "tx2",
+		},
+	},
 	"_orderby": "bonus desc",
 	"_groupby": "department",
 }
@@ -66,8 +76,8 @@ table := "some_table"
 selectFields := []string{"name", "age", "sex"}
 cond, values, err := builder.BuildSelect(table, where, selectFields)
 
-//cond = SELECT name, age, sex FROM some_table WHERE (score=? AND city IN (?, ?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
-//values = []interface{}{"beijing", "shanghai", 5, 35}
+//cond = SELECT name,age,sex FROM some_table WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND score=? AND city IN (?,?) AND age>? AND address IS NOT NULL) GROUP BY department ORDER BY bonus DESC
+//values = []interface{}{11, 45, "234", "tx2", 5, "beijing", "shanghai", 35}
 
 rows, err := db.Query(cond, values...)
 ```
