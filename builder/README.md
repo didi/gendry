@@ -286,7 +286,7 @@ sign: `BuildDelete(table string, where map[string]interface{}) (string, []interf
 If you use `Prepare && stmt.SomeMethods` then You have no need to worry about the safety.
 Prepare is a safety mechanism backed by `mysql`, it makes sql injection out of work.
 
-So `builder` **doesn't** escape the string values it recieved -- it's unnecessary
+So `builder` **doesn't** escape the string values it received -- it's unnecessary
 
 If you call `db.Query(cond, vals...)` directly, and you **don't** set `interpolateParams` which is one of the driver's variables to `true`, the driver actually will still prepare a stmt.So it's safe.
 

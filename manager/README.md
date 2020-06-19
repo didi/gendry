@@ -56,7 +56,7 @@ Port sets the server port,default 3306
 
 `func (o *Option) Set(sets ...Setting) *Option`
 
-Set recieves a series of Set*-like functions
+Set receives a series of Set*-like functions
 
 ---
 
