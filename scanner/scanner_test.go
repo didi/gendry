@@ -419,16 +419,17 @@ func Test_Scan_Pointer(t *testing.T) {
 		mp := map[string]interface{}{
 			"age": tc.in,
 		}
-		bind(mp, &u)
+		err := bind(mp, &u)
+		if err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
 		ass.Equal(tc.out, *u.Age, "case #%d fail", idx)
 	}
 }
 
 func float64Ptr(v float64) *float64 {
-	return &v
-}
-
-func int64Ptr(v int64) *int64 {
 	return &v
 }
 
@@ -490,7 +491,12 @@ func Test_Scan_Multi_Pointer(t *testing.T) {
 	ass := assert.New(t)
 	for idx, tc := range testData {
 		var u user
-		bind(tc.in, &u)
+		err := bind(tc.in, &u)
+		if err == nil {
+			ass.NoError(err)
+		} else {
+			ass.Error(err)
+		}
 		ass.Equal(tc.out, u, "case #%d fail %+v", idx, u)
 	}
 }

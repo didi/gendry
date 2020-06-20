@@ -229,7 +229,7 @@ func (bt Between) Build() ([]string, []interface{}) {
 }
 
 func betweenBuilder(bt map[string][]interface{}, notBetween bool) ([]string, []interface{}) {
-	if bt == nil || len(bt) == 0 {
+	if len(bt) == 0 {
 		return nil, nil
 	}
 	var cond []string
