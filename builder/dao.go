@@ -315,23 +315,6 @@ func assembleExpression(field, op string) string {
 	return quoteField(field) + op + "?"
 }
 
-// caller ensure that orderMap is not empty
-func orderBy(orderMap []eleOrderBy) (string, error) {
-	var str strings.Builder
-	for _, orderInfo := range orderMap {
-		realOrder := strings.ToUpper(orderInfo.order)
-		if realOrder != "ASC" && realOrder != "DESC" {
-			return "", errOrderByParam
-		}
-		str.WriteString(orderInfo.field)
-		str.WriteByte(' ')
-		str.WriteString(realOrder)
-		str.WriteByte(',')
-	}
-	finalSQL := str.String()
-	return finalSQL[:len(finalSQL)-1], nil
-}
-
 func resolveKV(m map[string]interface{}) (keys []string, vals []interface{}) {
 	for k := range m {
 		keys = append(keys, k)
@@ -452,7 +435,7 @@ func splitCondition(conditions []Comparable) ([]Comparable, []Comparable) {
 	return conditions, nil
 }
 
-func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleOrderBy, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
+func buildSelect(table string, ufields []string, groupBy, orderBy string, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
 	fields := "*"
 	if len(ufields) > 0 {
 		for i := range ufields {
@@ -481,15 +464,9 @@ func buildSelect(table string, ufields []string, groupBy string, uOrderBy []eleO
 		bd.WriteString(havingString)
 		vals = append(vals, havingVals...)
 	}
-	if len(uOrderBy) != 0 {
-		str, err := orderBy(uOrderBy)
-		if nil != err {
-			return "", nil, err
-		}
-		if str != "" {
-			bd.WriteString(" ORDER BY ")
-			bd.WriteString(str)
-		}
+	if "" != orderBy {
+		bd.WriteString(" ORDER BY ")
+		bd.WriteString(orderBy)
 	}
 	if nil != limit {
 		bd.WriteString(" LIMIT ?,?")

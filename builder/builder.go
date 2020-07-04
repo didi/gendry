@@ -10,7 +10,6 @@ import (
 
 var (
 	errSplitEmptyKey = errors.New("[builder] couldn't split a empty string")
-	errSplitOrderBy  = errors.New(`[builder] the value of _orderby should be "fieldName direction [,fieldName direction]"`)
 	// ErrUnsupportedOperator reports there's unsupported operators in where-condition
 	ErrUnsupportedOperator       = errors.New("[builder] unsupported operator")
 	errOrValueType               = errors.New(`[builder] the value of "_or" must be of slice of map[string]interface{} type`)
@@ -40,10 +39,6 @@ func (w *whereMapSet) add(op, field string, val interface{}) {
 	s[field] = val
 }
 
-type eleOrderBy struct {
-	field, order string
-}
-
 type eleLimit struct {
 	begin, step uint
 }
@@ -52,23 +47,22 @@ type eleLimit struct {
 // supported operators including: =,in,>,>=,<,<=,<>,!=.
 // key without operator will be regarded as =.
 // special key begin with _: _orderby,_groupby,_limit,_having.
-// the value of _orderby must be a string separated by a space(ie:map[string]interface{}{"_orderby": "fieldName desc"}).
 // the value of _limit must be a slice whose type should be []uint and must contain two uints(ie: []uint{0, 100}).
 // the value of _having must be a map just like where but only support =,in,>,>=,<,<=,<>,!=
 // for more examples,see README.md or open a issue.
 func BuildSelect(table string, where map[string]interface{}, selectField []string) (cond string, vals []interface{}, err error) {
-	var orderBy []eleOrderBy
+	var orderBy string
 	var limit *eleLimit
 	var groupBy string
 	var having map[string]interface{}
 	copiedWhere := copyWhere(where)
 	if val, ok := copiedWhere["_orderby"]; ok {
-		eleOrderBy, e := splitOrderBy(val.(string))
-		if e != nil {
-			err = e
+		s, ok := val.(string)
+		if !ok {
+			err = errGroupByValueType
 			return
 		}
-		orderBy = eleOrderBy
+		orderBy = strings.TrimSpace(s)
 		delete(copiedWhere, "_orderby")
 	}
 	if val, ok := copiedWhere["_groupby"]; ok {
@@ -77,12 +71,14 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 			err = errGroupByValueType
 			return
 		}
-		groupBy = s
+		groupBy = strings.TrimSpace(s)
 		delete(copiedWhere, "_groupby")
-		if h, ok := copiedWhere["_having"]; ok {
-			having, err = resolveHaving(h)
-			if nil != err {
-				return
+		if "" != groupBy {
+			if h, ok := copiedWhere["_having"]; ok {
+				having, err = resolveHaving(h)
+				if nil != err {
+					return
+				}
 			}
 		}
 	}
@@ -411,26 +407,6 @@ func removeInnerSpace(operator string) string {
 		}
 	}
 	return operator[:firstSpace] + operator[lastSpace:]
-}
-
-func splitOrderBy(orderby string) ([]eleOrderBy, error) {
-	var err error
-	var eleOrder []eleOrderBy
-	for _, val := range strings.Split(orderby, ",") {
-		val = strings.Trim(val, " ")
-		idx := strings.IndexByte(val, ' ')
-		if idx == -1 {
-			err = errSplitOrderBy
-			return eleOrder, err
-		}
-		field := val[:idx]
-		direction := strings.Trim(val[idx+1:], " ")
-		eleOrder = append(eleOrder, eleOrderBy{
-			field: field,
-			order: direction,
-		})
-	}
-	return eleOrder, err
 }
 
 const (
