@@ -13,6 +13,7 @@ var (
 	// ErrUnsupportedOperator reports there's unsupported operators in where-condition
 	ErrUnsupportedOperator       = errors.New("[builder] unsupported operator")
 	errOrValueType               = errors.New(`[builder] the value of "_or" must be of slice of map[string]interface{} type`)
+	errOrderByValueType          = errors.New(`[builder] the value of "_orderby" must be of string type`)
 	errGroupByValueType          = errors.New(`[builder] the value of "_groupby" must be of string type`)
 	errLimitValueType            = errors.New(`[builder] the value of "_limit" must be of []uint type`)
 	errLimitValueLength          = errors.New(`[builder] the value of "_limit" must contain one or two uint elements`)
@@ -59,7 +60,7 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 	if val, ok := copiedWhere["_orderby"]; ok {
 		s, ok := val.(string)
 		if !ok {
-			err = errGroupByValueType
+			err = errOrderByValueType
 			return
 		}
 		orderBy = strings.TrimSpace(s)
