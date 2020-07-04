@@ -111,25 +111,6 @@ func TestAssembleExpression(t *testing.T) {
 	}
 }
 
-func TestOrderBy(t *testing.T) {
-	var data = []struct {
-		inOrderBy []eleOrderBy
-		outStr    string
-		outErr    error
-	}{
-		{[]eleOrderBy{eleOrderBy{"age", "desc"}}, "age DESC", nil},
-		{[]eleOrderBy{eleOrderBy{"name", "Asc"}}, "name ASC", nil},
-		{[]eleOrderBy{eleOrderBy{"tt", "DesC"}}, "tt DESC", nil},
-		{[]eleOrderBy{eleOrderBy{"qq", "DESCC"}}, "", errOrderByParam},
-	}
-	ass := assert.New(t)
-	for _, tc := range data {
-		actual, err := orderBy(tc.inOrderBy)
-		ass.Equal(tc.outErr, err)
-		ass.Equal(tc.outStr, actual)
-	}
-}
-
 func TestResolveKV(t *testing.T) {
 	var data = []struct {
 		in      map[string]interface{}
@@ -348,7 +329,7 @@ func TestBuildSelect(t *testing.T) {
 		fields     []string
 		conditions []Comparable
 		groupBy    string
-		orderBy    []eleOrderBy
+		orderBy    string
 		limit      *eleLimit
 		outStr     string
 		outVals    []interface{}
@@ -385,7 +366,7 @@ func TestBuildSelect(t *testing.T) {
 				}),
 			},
 			groupBy: "",
-			orderBy: []eleOrderBy{eleOrderBy{field: "foo", order: "desc"}, {"baz", "aSc"}},
+			orderBy: "foo DESC,baz ASC",
 			limit: &eleLimit{
 				begin: 10,
 				step:  20,

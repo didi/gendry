@@ -121,6 +121,25 @@ func TestBuildHaving(t *testing.T) {
 				err:  nil,
 			},
 		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"_groupby": "  ",
+					"_having": map[string]interface{}{
+						"total >=": 1000,
+						"total <":  50000,
+					},
+					"age in": []interface{}{1, 2, 3},
+				},
+				selectField: []string{"name, age"},
+			},
+			out: outStruct{
+				cond: "SELECT name, age FROM tb WHERE (age IN (?,?,?))",
+				vals: []interface{}{1, 2, 3},
+				err:  nil,
+			},
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
@@ -307,7 +326,7 @@ func Test_BuildSelect(t *testing.T) {
 							},
 						},
 					},
-					"_orderby": "age desc, score asc",
+					"_orderby": "age DESC,score ASC",
 					"_groupby": "department",
 					"_limit":   []uint{0, 100},
 				},
@@ -347,6 +366,21 @@ func Test_BuildSelect(t *testing.T) {
 				err:  nil,
 			},
 		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"_orderby": "  ",
+				},
+				fields: nil,
+			},
+			out: outStruct{
+				cond: "SELECT * FROM tb WHERE (foo=?)",
+				vals: []interface{}{"bar"},
+				err:  nil,
+			},
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
@@ -364,7 +398,7 @@ func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 			"qq":       "tt",
 			"age in":   []interface{}{1, 3, 5, 7, 9},
 			"faith <>": "Muslim",
-			"_orderby": "age desc",
+			"_orderby": "age DESC",
 			"_groupby": "department",
 			"_limit":   []uint{0, 100},
 		}, []string{"a", "b", "c"})
@@ -383,7 +417,7 @@ func BenchmarkBuildSelect_Parallel(b *testing.B) {
 				"qq":       "tt",
 				"age in":   []interface{}{1, 3, 5, 7, 9},
 				"faith <>": "Muslim",
-				"_orderby": "age desc",
+				"_orderby": "age DESC",
 				"_groupby": "department",
 				"_limit":   []uint{0, 100},
 			}, nil)
@@ -605,7 +639,7 @@ func Test_BuildIN(t *testing.T) {
 					"qq":       "tt",
 					"age in":   []int{1, 3, 5, 7, 9},
 					"faith <>": "Muslim",
-					"_orderby": "age desc",
+					"_orderby": "age DESC",
 					"_groupby": "department",
 				},
 				fields: []string{"id", "name", "age"},
@@ -655,7 +689,7 @@ func Test_BuildOrderBy(t *testing.T) {
 				table: "tb",
 				where: map[string]interface{}{
 					"foo":      "bar",
-					"_orderby": "age desc, id asc",
+					"_orderby": "age DESC,id ASC",
 				},
 				fields: []string{"id", "name", "age"},
 			},
@@ -670,42 +704,12 @@ func Test_BuildOrderBy(t *testing.T) {
 				table: "tb",
 				where: map[string]interface{}{
 					"foo":      "bar",
-					"_orderby": "   age    desc,id     asc    ",
+					"_orderby": "RAND()",
 				},
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
-				vals: []interface{}{"bar"},
-				err:  nil,
-			},
-		},
-		{
-			in: inStruct{
-				table: "tb",
-				where: map[string]interface{}{
-					"foo":      "bar",
-					"_orderby": "   age    desc,   id     asc    ",
-				},
-				fields: []string{"id", "name", "age"},
-			},
-			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC,id ASC",
-				vals: []interface{}{"bar"},
-				err:  nil,
-			},
-		},
-		{
-			in: inStruct{
-				table: "tb",
-				where: map[string]interface{}{
-					"foo":      "bar",
-					"_orderby": "   age    desc",
-				},
-				fields: []string{"id", "name", "age"},
-			},
-			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY age DESC",
+				cond: "SELECT id,name,age FROM tb WHERE (foo=?) ORDER BY RAND()",
 				vals: []interface{}{"bar"},
 				err:  nil,
 			},
@@ -862,7 +866,7 @@ func Test_NotIn(t *testing.T) {
 		"address":            IsNotNull,
 		" hobbies not in   ": []string{"baseball", "swim", "running"},
 		"_groupby":           "department",
-		"_orderby":           "bonus desc",
+		"_orderby":           "bonus DESC",
 	}
 	table := "some_table"
 	selectFields := []string{"name", "age", "sex"}
