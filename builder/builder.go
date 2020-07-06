@@ -146,7 +146,7 @@ func resolveHaving(having interface{}) (map[string]interface{}, error) {
 		if nil != err {
 			return nil, err
 		}
-		if !isStringInSlice(operator, opOrder) {
+		if !isStringInSlice(strings.ToLower(operator), opOrder) {
 			return nil, errHavingUnsupportedOperator
 		}
 		copiedMap[key] = val
@@ -228,11 +228,12 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 			continue
 		}
 		field, operator, err = splitKey(key)
-		if !isStringInSlice(operator, opOrder) {
-			return nil, ErrUnsupportedOperator
-		}
 		if nil != err {
 			return nil, err
+		}
+		operator = strings.ToLower(operator)
+		if !isStringInSlice(operator, opOrder) {
+			return nil, ErrUnsupportedOperator
 		}
 		if _, ok := val.(NullType); ok {
 			operator = opNull

@@ -76,7 +76,7 @@ func main() {
 
 sign: `BuildSelect(table string, where map[string]interface{}, field []string) (string,[]interface{},error)`
 
-operators supported:
+operators supported(case-insensitive):
 
 * =
 * &gt;
