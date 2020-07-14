@@ -51,7 +51,7 @@ type eleLimit struct {
 // the value of _limit must be a slice whose type should be []uint and must contain two uints(ie: []uint{0, 100}).
 // the value of _having must be a map just like where but only support =,in,>,>=,<,<=,<>,!=
 // for more examples,see README.md or open a issue.
-func BuildSelect(table string, where map[string]interface{}, selectField []string) (cond string, vals []interface{}, err error) {
+func BuildSelect(table string, where map[string]interface{}, selectField []string, lock bool) (cond string, vals []interface{}, err error) {
 	var orderBy string
 	var limit *eleLimit
 	var groupBy string
@@ -120,7 +120,7 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 		conditions = append(conditions, nilComparable(0))
 		conditions = append(conditions, havingCondition...)
 	}
-	return buildSelect(table, selectField, groupBy, orderBy, limit, conditions...)
+	return buildSelect(table, selectField, groupBy, orderBy, limit, lock, conditions...)
 }
 
 func copyWhere(src map[string]interface{}) (target map[string]interface{}) {

@@ -435,7 +435,7 @@ func splitCondition(conditions []Comparable) ([]Comparable, []Comparable) {
 	return conditions, nil
 }
 
-func buildSelect(table string, ufields []string, groupBy, orderBy string, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
+func buildSelect(table string, ufields []string, groupBy, orderBy string, limit *eleLimit, lock bool, conditions ...Comparable) (string, []interface{}, error) {
 	fields := "*"
 	if len(ufields) > 0 {
 		for i := range ufields {
@@ -471,6 +471,9 @@ func buildSelect(table string, ufields []string, groupBy, orderBy string, limit 
 	if nil != limit {
 		bd.WriteString(" LIMIT ?,?")
 		vals = append(vals, int(limit.begin), int(limit.step))
+	}
+	if lock {
+		bd.WriteString(" FOR UPDATE")
 	}
 	return bd.String(), vals, nil
 }
