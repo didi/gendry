@@ -378,7 +378,7 @@ func TestBuildSelect(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := buildSelect(tc.table, tc.fields, tc.groupBy, tc.orderBy, tc.limit, tc.conditions...)
+		cond, vals, err := buildSelect(tc.table, tc.fields, tc.groupBy, tc.orderBy, tc.limit, false, tc.conditions...)
 		ass.Equal(tc.outErr, err)
 		ass.Equal(tc.outStr, cond)
 		ass.Equal(tc.outVals, vals)

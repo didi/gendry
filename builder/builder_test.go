@@ -143,7 +143,7 @@ func TestBuildHaving(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField, false)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -205,7 +205,7 @@ func TestBuildHaving_1(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, tc := range testCases {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField, false)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -446,7 +446,7 @@ func Test_BuildSelect(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -463,7 +463,7 @@ func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 			"_orderby": "age DESC",
 			"_groupby": "department",
 			"_limit":   []uint{0, 100},
-		}, []string{"a", "b", "c"})
+		}, []string{"a", "b", "c"}, false)
 		if err != nil {
 			b.FailNow()
 		}
@@ -482,7 +482,7 @@ func BenchmarkBuildSelect_Parallel(b *testing.B) {
 				"_orderby": "age DESC",
 				"_groupby": "department",
 				"_limit":   []uint{0, 100},
-			}, nil)
+			}, nil, false)
 			if cond != expectCond {
 				b.Fatalf("should be %s but %s\n", expectCond, cond)
 			}
@@ -658,7 +658,7 @@ func Test_BuildIN(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -722,7 +722,7 @@ func Test_BuildOrderBy(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -807,7 +807,7 @@ func Test_Where_Null(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -855,7 +855,7 @@ func TestBuildSelect_Limit(t *testing.T) {
 	for _, tc := range testCase {
 		cond, vals, err := BuildSelect("tb", map[string]interface{}{
 			"_limit": tc.limit,
-		}, nil)
+		}, nil, false)
 		ass.Equal(tc.err, err)
 		if tc.err == nil {
 			ass.Equal(`SELECT * FROM tb LIMIT ?,?`, cond, "where=%+v", tc.limit)
@@ -891,7 +891,7 @@ func Test_NotIn(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields)
+		cond, vals, err := BuildSelect(table, w, fields, false)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -919,7 +919,7 @@ func TestBuildBetween(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields)
+		cond, vals, err := BuildSelect(table, w, fields, false)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -949,7 +949,7 @@ func TestBuildNotBetween(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields)
+		cond, vals, err := BuildSelect(table, w, fields, false)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -981,7 +981,7 @@ func TestBuildCombinedBetween(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields)
+		cond, vals, err := BuildSelect(table, w, fields, false)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -1074,7 +1074,7 @@ func TestLike(t *testing.T) {
 	ass := assert.New(t)
 	for _, tc := range data {
 		for _, w := range tc.in.where {
-			cond, vals, err := BuildSelect(tc.in.table, w, tc.in.fields)
+			cond, vals, err := BuildSelect(tc.in.table, w, tc.in.fields, false)
 			ass.Equal(tc.out.err, err)
 			ass.Equal(tc.out.cond, cond)
 			ass.Equal(tc.out.vals, vals)
@@ -1098,7 +1098,7 @@ func TestNotLike(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, nil)
+		cond, vals, err := BuildSelect(table, w, nil, false)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -1123,7 +1123,7 @@ func TestNotLike_1(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, nil)
+		cond, vals, err := BuildSelect(table, w, nil, false)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)

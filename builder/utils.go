@@ -9,7 +9,7 @@ import (
 
 // AggregateQuery is a helper function to execute the aggregate query and return the result
 func AggregateQuery(ctx context.Context, db *sql.DB, table string, where map[string]interface{}, aggregate AggregateSymbleBuilder) (ResultResolver, error) {
-	cond, vals, err := BuildSelect(table, where, []string{aggregate.Symble()})
+	cond, vals, err := BuildSelect(table, where, []string{aggregate.Symble()}, false)
 	if nil != err {
 		return resultResolve{0}, err
 	}
