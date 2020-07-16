@@ -7,6 +7,118 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBuildLockMode(t *testing.T) {
+	type inStruct struct {
+		table  string
+		where  map[string]interface{}
+		fields []string
+	}
+	type outStruct struct {
+		cond string
+		vals []interface{}
+		err  error
+	}
+	var data = []struct {
+		in  inStruct
+		out outStruct
+	}{
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"qq":       "tt",
+					"age in":   []interface{}{1, 3, 5, 7, 9},
+					"faith <>": "Muslim",
+					"_or": []map[string]interface{}{
+						{
+							"aa": 11,
+							"bb": "xswl",
+						},
+						{
+							"cc":    "234",
+							"dd in": []interface{}{7, 8},
+							"_or": []map[string]interface{}{
+								{
+									"neeest_ee <>": "dw42",
+									"neeest_ff in": []interface{}{34, 59},
+								},
+								{
+									"neeest_gg":        1259,
+									"neeest_hh not in": []interface{}{358, 1245},
+								},
+							},
+						},
+					},
+					"_orderby":  "age DESC,score ASC",
+					"_groupby":  "department",
+					"_limit":    []uint{0, 100},
+					"_lockMode": "share",
+				},
+				fields: []string{"id", "name", "age"},
+			},
+			out: outStruct{
+				cond: "SELECT id,name,age FROM tb WHERE (((aa=? AND bb=?) OR (((neeest_ff IN (?,?) AND neeest_ee!=?) OR (neeest_gg=? AND neeest_hh NOT IN (?,?))) AND cc=? AND dd IN (?,?))) AND foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,? LOCK IN SHARE MODE",
+				vals: []interface{}{11, "xswl", 34, 59, "dw42", 1259, 358, 1245, "234", 7, 8, "bar", "tt", 1, 3, 5, 7, 9, "Muslim", 0, 100},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"name like": "%123",
+					"_lockMode": "exclusive",
+				},
+				fields: nil,
+			},
+			out: outStruct{
+				cond: `SELECT * FROM tb WHERE (name LIKE ?) FOR UPDATE`,
+				vals: []interface{}{"%123"},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"name":      "caibirdme",
+					"_lockMode": "share",
+				},
+				fields: nil,
+			},
+			out: outStruct{
+				cond: "SELECT * FROM tb WHERE (name=?) LOCK IN SHARE MODE",
+				vals: []interface{}{"caibirdme"},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":       "bar",
+					"_orderby":  "  ",
+					"_lockMode": "exclusive",
+				},
+				fields: nil,
+			},
+			out: outStruct{
+				cond: "SELECT * FROM tb WHERE (foo=?) FOR UPDATE",
+				vals: []interface{}{"bar"},
+				err:  nil,
+			},
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range data {
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		ass.Equal(tc.out.err, err)
+		ass.Equal(tc.out.cond, cond)
+		ass.Equal(tc.out.vals, vals)
+	}
+}
+
 func TestBuildHaving(t *testing.T) {
 	type inStruct struct {
 		table       string
@@ -143,7 +255,7 @@ func TestBuildHaving(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField, false)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -205,7 +317,7 @@ func TestBuildHaving_1(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, tc := range testCases {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField, false)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.selectField)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -446,7 +558,7 @@ func Test_BuildSelect(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -463,7 +575,7 @@ func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 			"_orderby": "age DESC",
 			"_groupby": "department",
 			"_limit":   []uint{0, 100},
-		}, []string{"a", "b", "c"}, false)
+		}, []string{"a", "b", "c"})
 		if err != nil {
 			b.FailNow()
 		}
@@ -482,7 +594,7 @@ func BenchmarkBuildSelect_Parallel(b *testing.B) {
 				"_orderby": "age DESC",
 				"_groupby": "department",
 				"_limit":   []uint{0, 100},
-			}, nil, false)
+			}, nil)
 			if cond != expectCond {
 				b.Fatalf("should be %s but %s\n", expectCond, cond)
 			}
@@ -658,7 +770,7 @@ func Test_BuildIN(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -722,7 +834,7 @@ func Test_BuildOrderBy(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -807,7 +919,7 @@ func Test_Where_Null(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields, false)
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
 		ass.Equal(tc.out.err, err)
 		ass.Equal(tc.out.cond, cond)
 		ass.Equal(tc.out.vals, vals)
@@ -855,7 +967,7 @@ func TestBuildSelect_Limit(t *testing.T) {
 	for _, tc := range testCase {
 		cond, vals, err := BuildSelect("tb", map[string]interface{}{
 			"_limit": tc.limit,
-		}, nil, false)
+		}, nil)
 		ass.Equal(tc.err, err)
 		if tc.err == nil {
 			ass.Equal(`SELECT * FROM tb LIMIT ?,?`, cond, "where=%+v", tc.limit)
@@ -891,7 +1003,7 @@ func Test_NotIn(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields, false)
+		cond, vals, err := BuildSelect(table, w, fields)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -919,7 +1031,7 @@ func TestBuildBetween(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields, false)
+		cond, vals, err := BuildSelect(table, w, fields)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -949,7 +1061,7 @@ func TestBuildNotBetween(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields, false)
+		cond, vals, err := BuildSelect(table, w, fields)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -981,7 +1093,7 @@ func TestBuildCombinedBetween(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, fields, false)
+		cond, vals, err := BuildSelect(table, w, fields)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -1074,7 +1186,7 @@ func TestLike(t *testing.T) {
 	ass := assert.New(t)
 	for _, tc := range data {
 		for _, w := range tc.in.where {
-			cond, vals, err := BuildSelect(tc.in.table, w, tc.in.fields, false)
+			cond, vals, err := BuildSelect(tc.in.table, w, tc.in.fields)
 			ass.Equal(tc.out.err, err)
 			ass.Equal(tc.out.cond, cond)
 			ass.Equal(tc.out.vals, vals)
@@ -1098,7 +1210,7 @@ func TestNotLike(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, nil, false)
+		cond, vals, err := BuildSelect(table, w, nil)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)
@@ -1123,7 +1235,7 @@ func TestNotLike_1(t *testing.T) {
 
 	ass := assert.New(t)
 	for _, w := range where {
-		cond, vals, err := BuildSelect(table, w, nil, false)
+		cond, vals, err := BuildSelect(table, w, nil)
 		ass.NoError(err)
 		ass.Equal(expectCond, cond)
 		ass.Equal(expectVals, vals)

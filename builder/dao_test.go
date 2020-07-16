@@ -331,6 +331,7 @@ func TestBuildSelect(t *testing.T) {
 		groupBy    string
 		orderBy    string
 		limit      *eleLimit
+		lockMode   string
 		outStr     string
 		outVals    []interface{}
 		outErr     error
@@ -371,14 +372,15 @@ func TestBuildSelect(t *testing.T) {
 				begin: 10,
 				step:  20,
 			},
-			outErr:  nil,
-			outStr:  "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND qq IN (?,?,?) AND ((aa=? AND bb=?) OR (cc=? AND dd=?))) ORDER BY foo DESC,baz ASC LIMIT ?,?",
-			outVals: []interface{}{2, 1, 4, 5, 6, 3, 4, 7, 8, 10, 20},
+			lockMode: "exclusive",
+			outErr:   nil,
+			outStr:   "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND qq IN (?,?,?) AND ((aa=? AND bb=?) OR (cc=? AND dd=?))) ORDER BY foo DESC,baz ASC LIMIT ?,?",
+			outVals:  []interface{}{2, 1, 4, 5, 6, 3, 4, 7, 8, 10, 20},
 		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := buildSelect(tc.table, tc.fields, tc.groupBy, tc.orderBy, tc.limit, false, tc.conditions...)
+		cond, vals, err := buildSelect(tc.table, tc.fields, tc.groupBy, tc.orderBy, tc.lockMode, tc.limit, tc.conditions...)
 		ass.Equal(tc.outErr, err)
 		ass.Equal(tc.outStr, cond)
 		ass.Equal(tc.outVals, vals)

@@ -19,6 +19,8 @@ var (
 	errLimitValueLength          = errors.New(`[builder] the value of "_limit" must contain one or two uint elements`)
 	errHavingValueType           = errors.New(`[builder] the value of "_having" must be of map[string]interface{}`)
 	errHavingUnsupportedOperator = errors.New(`[builder] "_having" contains unsupported operator`)
+	errLockValueType             = errors.New(`[builder] the value of "_lock" must be of string type`)
+	errNotAllowedLockType        = errors.New(`[builder] the value of "_lock" is not allowed`)
 
 	errWhereInterfaceSliceType = `[builder] the value of "xxx %s" must be of []interface{} type`
 	errEmptySliceCondition     = `[builder] the value of "%s" must contain at least one element`
@@ -51,11 +53,12 @@ type eleLimit struct {
 // the value of _limit must be a slice whose type should be []uint and must contain two uints(ie: []uint{0, 100}).
 // the value of _having must be a map just like where but only support =,in,>,>=,<,<=,<>,!=
 // for more examples,see README.md or open a issue.
-func BuildSelect(table string, where map[string]interface{}, selectField []string, lock bool) (cond string, vals []interface{}, err error) {
+func BuildSelect(table string, where map[string]interface{}, selectField []string) (cond string, vals []interface{}, err error) {
 	var orderBy string
 	var limit *eleLimit
 	var groupBy string
 	var having map[string]interface{}
+	var lockMode string
 	copiedWhere := copyWhere(where)
 	if val, ok := copiedWhere["_orderby"]; ok {
 		s, ok := val.(string)
@@ -107,6 +110,19 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 		}
 		delete(copiedWhere, "_limit")
 	}
+	if val, ok := copiedWhere["_lockMode"]; ok {
+		s, ok := val.(string)
+		if !ok {
+			err = errLockValueType
+			return
+		}
+		lockMode = strings.TrimSpace(s)
+		if _, ok := allowedLockType[lockMode]; !ok {
+			err = errNotAllowedLockType
+			return
+		}
+		delete(copiedWhere, "_lockMode")
+	}
 	conditions, err := getWhereConditions(copiedWhere)
 	if nil != err {
 		return
@@ -120,7 +136,7 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 		conditions = append(conditions, nilComparable(0))
 		conditions = append(conditions, havingCondition...)
 	}
-	return buildSelect(table, selectField, groupBy, orderBy, limit, lock, conditions...)
+	return buildSelect(table, selectField, groupBy, orderBy, lockMode, limit, conditions...)
 }
 
 func copyWhere(src map[string]interface{}) (target map[string]interface{}) {

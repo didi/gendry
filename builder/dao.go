@@ -11,6 +11,11 @@ var (
 	errInsertDataNotMatch = errors.New("insert data not match")
 	errInsertNullData     = errors.New("insert null data")
 	errOrderByParam       = errors.New("order param only should be ASC or DESC")
+
+	allowedLockType = map[string]string{
+		"share":     " LOCK IN SHARE MODE",
+		"exclusive": " FOR UPDATE",
+	}
 )
 
 //the order of a map is unpredicatable so we need a sort algorithm to sort the fields
@@ -435,7 +440,7 @@ func splitCondition(conditions []Comparable) ([]Comparable, []Comparable) {
 	return conditions, nil
 }
 
-func buildSelect(table string, ufields []string, groupBy, orderBy string, limit *eleLimit, lock bool, conditions ...Comparable) (string, []interface{}, error) {
+func buildSelect(table string, ufields []string, groupBy, orderBy, lockMode string, limit *eleLimit, conditions ...Comparable) (string, []interface{}, error) {
 	fields := "*"
 	if len(ufields) > 0 {
 		for i := range ufields {
@@ -472,8 +477,8 @@ func buildSelect(table string, ufields []string, groupBy, orderBy string, limit 
 		bd.WriteString(" LIMIT ?,?")
 		vals = append(vals, int(limit.begin), int(limit.step))
 	}
-	if lock {
-		bd.WriteString(" FOR UPDATE")
+	if "" != lockMode {
+		bd.WriteString(allowedLockType[lockMode])
 	}
 	return bd.String(), vals, nil
 }
