@@ -113,12 +113,12 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 	if val, ok := copiedWhere["_lockMode"]; ok {
 		s, ok := val.(string)
 		if !ok {
-			err = errLockValueType
+			err = errLockModeValueType
 			return
 		}
 		lockMode = strings.TrimSpace(s)
 		if _, ok := allowedLockMode[lockMode]; !ok {
-			err = errNotAllowedLockType
+			err = errNotAllowedLockMode
 			return
 		}
 		delete(copiedWhere, "_lockMode")
