@@ -19,8 +19,8 @@ var (
 	errLimitValueLength          = errors.New(`[builder] the value of "_limit" must contain one or two uint elements`)
 	errHavingValueType           = errors.New(`[builder] the value of "_having" must be of map[string]interface{}`)
 	errHavingUnsupportedOperator = errors.New(`[builder] "_having" contains unsupported operator`)
-	errLockValueType             = errors.New(`[builder] the value of "_lock" must be of string type`)
-	errNotAllowedLockType        = errors.New(`[builder] the value of "_lock" is not allowed`)
+	errLockModeValueType         = errors.New(`[builder] the value of "_lockMode" must be of string type`)
+	errNotAllowedLockMode        = errors.New(`[builder] the value of "_lockMode" is not allowed`)
 
 	errWhereInterfaceSliceType = `[builder] the value of "xxx %s" must be of []interface{} type`
 	errEmptySliceCondition     = `[builder] the value of "%s" must contain at least one element`
@@ -117,7 +117,7 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 			return
 		}
 		lockMode = strings.TrimSpace(s)
-		if _, ok := allowedLockType[lockMode]; !ok {
+		if _, ok := allowedLockMode[lockMode]; !ok {
 			err = errNotAllowedLockType
 			return
 		}

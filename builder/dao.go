@@ -12,7 +12,7 @@ var (
 	errInsertNullData     = errors.New("insert null data")
 	errOrderByParam       = errors.New("order param only should be ASC or DESC")
 
-	allowedLockType = map[string]string{
+	allowedLockMode = map[string]string{
 		"share":     " LOCK IN SHARE MODE",
 		"exclusive": " FOR UPDATE",
 	}
@@ -478,7 +478,7 @@ func buildSelect(table string, ufields []string, groupBy, orderBy, lockMode stri
 		vals = append(vals, int(limit.begin), int(limit.step))
 	}
 	if "" != lockMode {
-		bd.WriteString(allowedLockType[lockMode])
+		bd.WriteString(allowedLockMode[lockMode])
 	}
 	return bd.String(), vals, nil
 }
