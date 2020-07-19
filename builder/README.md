@@ -109,6 +109,7 @@ others supported:
 * _groupby
 * _having
 * _limit
+* _lockMode
 
 ``` go
 where := map[string]interface{}{
@@ -127,6 +128,7 @@ where := map[string]interface{}{
     "_groupby": "fieldName",
     "_having": map[string]interface{}{"foo":"bar",},
     "_limit": []uint{offset, row_count},
+    "_lockMode": "share"
 }
 ```
 Note:
@@ -134,6 +136,9 @@ Note:
 * value of _limit could be:
     * `"_limit": []uint{a,b}` => `LIMIT a,b`
     * `"_limit": []uint{a}` => `LIMIT 0,a`
+* value of _lockMode only supports `share` and `exclusive` temporarily:
+    * `share` representative `SELECT ... LOCK IN SHARE MODE`. Unfortunately, the current version does not support `SELECT ... FOR SHARE`, It'll be supported in the future.
+    * `exclusive` representative `SELECT ... FOR UPDATE`
 
 #### Aggregate
 
