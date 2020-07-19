@@ -128,7 +128,7 @@ where := map[string]interface{}{
     "_groupby": "fieldName",
     "_having": map[string]interface{}{"foo":"bar",},
     "_limit": []uint{offset, row_count},
-    "_lockMode": "share"
+    "_lockMode": "share",
 }
 ```
 Note:
