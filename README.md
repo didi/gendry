@@ -1,5 +1,5 @@
 ## Gendry
-[![Build Status](https://www.travis-ci.org/didi/gendry.svg?branch=master)](https://www.travis-ci.org/didi/gendry)
+[![Build Status](https://github.com/didi/gendry/workflows/Go/badge.svg)](https://github.com/didi/gendry/actions)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/didi-gendry/Lobby)
 [![Hex.pm](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/didi/gendry/blob/master/LICENSE)
 [![GoDoc](https://godoc.org/github.com/didi/gendry?status.svg)](https://godoc.org/github.com/didi/gendry)
@@ -49,7 +49,7 @@ the format of a `dataSourceName` is：
 manager is based on `go-mysql-driver/mysql`, and if you don't know some of the manager.SetXXX series functions, see it on [mysql driver's github home page](https://github.com/go-sql-driver/mysql).And for more details see [manager's doc](manager/README.md)
 
 <h3 id="builder">Builder</h3>
-builder as its name says, is for building sql.Writing sql manually is intuitive but somewhat difficult to maintain.And for `where in`, if you have huge amount of elements in the `in` set, it's very hard to write.
+builder as its name says, is for building sql. Writing sql manually is intuitive but somewhat difficult to maintain.And for `where in`, if you have huge amount of elements in the `in` set, it's very hard to write.
 
 builder isn't an ORM, in fact one of the most important reasons we create Gendry is we don't like ORM. So Gendry just provides some simple APIs to help you building sqls:
 
