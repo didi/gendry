@@ -1241,3 +1241,17 @@ func TestNotLike_1(t *testing.T) {
 		ass.Equal(expectVals, vals)
 	}
 }
+
+func TestFixBug_insert_quote_field(t *testing.T) {
+	cond, vals, err := BuildInsert("tb", []map[string]interface{}{
+		{
+			"id": 1,
+			"`order`": 2,
+			"`id`": 3, // I know this is forbidden, but just for test
+		},
+	})
+	ass := assert.New(t)
+	ass.NoError(err)
+	ass.Equal("INSERT INTO tb (`id`,`order`,id) VALUES (?,?,?)", cond)
+	ass.Equal([]interface{}{3,2,1}, vals)
+}

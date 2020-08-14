@@ -387,7 +387,7 @@ func buildInsert(table string, setMap []map[string]interface{}, insertType inser
 	for _, mapItem := range setMap {
 		sets = append(sets, placeholder)
 		for _, field := range fields {
-			val, ok := mapItem[strings.Trim(field, "`")]
+			val, ok := mapItem[field]
 			if !ok {
 				return "", nil, errInsertDataNotMatch
 			}
