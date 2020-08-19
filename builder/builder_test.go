@@ -1245,13 +1245,33 @@ func TestNotLike_1(t *testing.T) {
 func TestFixBug_insert_quote_field(t *testing.T) {
 	cond, vals, err := BuildInsert("tb", []map[string]interface{}{
 		{
-			"id": 1,
+			"id":      1,
 			"`order`": 2,
-			"`id`": 3, // I know this is forbidden, but just for test
+			"`id`":    3, // I know this is forbidden, but just for test
 		},
 	})
 	ass := assert.New(t)
 	ass.NoError(err)
 	ass.Equal("INSERT INTO tb (`id`,`order`,id) VALUES (?,?,?)", cond)
-	ass.Equal([]interface{}{3,2,1}, vals)
+	ass.Equal([]interface{}{3, 2, 1}, vals)
+}
+
+func TestInsertOnDuplicate(t *testing.T) {
+	cond, vals, err := BuildInsertOnDuplicate(
+		"tb",
+		[]map[string]interface{}{
+			{
+				"a": 1,
+				"b": 2,
+				"c": 3,
+			},
+		},
+		map[string]interface{}{
+			"c": 4,
+		},
+	)
+	ass := assert.New(t)
+	ass.NoError(err)
+	ass.Equal("INSERT INTO tb (a,b,c) VALUES (?,?,?) ON DUPLICATE KEY UPDATE c=?", cond)
+	ass.Equal([]interface{}{1, 2, 3, 4}, vals)
 }
