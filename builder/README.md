@@ -264,6 +264,31 @@ cond, vals, err := qb.BuildReplaceInsert(table, data)
 db.Exec(cond, vals...)
 ```
 
+#### `BuildInsertOnDuplicate`
+
+sign: `BuildInsertOnDuplicate(table string, data []map[string]interface{}, update map[string]interface{}) (string, []interface{}, error)`
+
+data is a slice and every element(map) in it must have the same keys:
+
+``` go
+data := []map[string]interface{}{
+    {
+        "name": "deen",
+        "age":  23,
+    },
+    {
+        "name": "Tony",
+        "age":  30,
+    },
+}
+update := map[string]interface{}{
+    "role": "primaryschoolstudent",
+    "rank": 5,
+}
+cond, vals, err := qb.BuildInsertOnDuplicate(table, data, update)
+db.Exec(cond, vals...)
+```
+
 #### `NamedQuery`
 
 sign: `func NamedQuery(sql string, data map[string]interface{}) (string, []interface{}, error)`
