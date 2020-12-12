@@ -176,7 +176,6 @@ BuildUpdate is very likely to BuildSelect but it **doesn't support**:
 
 * _orderby
 * _groupby
-* _limit
 * _having
 
 ``` go
@@ -194,6 +193,7 @@ where := map[string]interface{}{
             "x4 <>": "tx2",
         },
     },
+    "_limit": uint(10),
 }
 update := map[string]interface{}{
 	"role": "primaryschoolstudent",
