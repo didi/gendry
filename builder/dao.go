@@ -397,7 +397,7 @@ func buildInsert(table string, setMap []map[string]interface{}, insertType inser
 	return fmt.Sprintf(format, insertType, quoteField(table), strings.Join(fields, ","), strings.Join(sets, ",")), vals, nil
 }
 
-func buildUpdate(table string, update map[string]interface{}, conditions ...Comparable) (string, []interface{}, error) {
+func buildUpdate(table string, update map[string]interface{}, limit uint, conditions ...Comparable) (string, []interface{}, error) {
 	format := "UPDATE %s SET %s"
 	keys, vals := resolveKV(update)
 	var sets string
@@ -410,6 +410,10 @@ func buildUpdate(table string, update map[string]interface{}, conditions ...Comp
 	if "" != whereString {
 		cond = fmt.Sprintf("%s WHERE %s", cond, whereString)
 		vals = append(vals, whereVals...)
+	}
+	if limit > 0 {
+		cond += " LIMIT ?"
+		vals = append(vals, int(limit))
 	}
 	return cond, vals, nil
 }

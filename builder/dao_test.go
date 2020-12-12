@@ -285,7 +285,7 @@ func TestBuildUpdate(t *testing.T) {
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		cond, vals, err := buildUpdate(tc.table, tc.data, tc.conditions...)
+		cond, vals, err := buildUpdate(tc.table, tc.data, 0, tc.conditions...)
 		ass.Equal(tc.outErr, err)
 		ass.Equal(tc.outStr, cond)
 		ass.Equal(tc.outVals, vals)

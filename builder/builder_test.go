@@ -447,6 +447,46 @@ func Test_BuildUpdate(t *testing.T) {
 				err:  nil,
 			},
 		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":    "bar",
+					"age >=": 23,
+					"sex in": []interface{}{"male", "female"},
+					"_limit": 10,
+				},
+				setData: map[string]interface{}{
+					"score":    50,
+					"district": "010",
+				},
+			},
+			out: outStruct{
+				cond: "UPDATE tb SET district=?,score=? WHERE (foo=? AND sex IN (?,?) AND age>=?) LIMIT ?",
+				vals: []interface{}{"010", 50, "bar", "male", "female", 23, 10},
+				err:  nil,
+			},
+		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":    "bar",
+					"age >=": 23,
+					"sex in": []interface{}{"male", "female"},
+					"_limit": 5.5,
+				},
+				setData: map[string]interface{}{
+					"score":    50,
+					"district": "010",
+				},
+			},
+			out: outStruct{
+				cond: "",
+				vals: nil,
+				err:  errUpdateLimitType,
+			},
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
@@ -1245,13 +1285,13 @@ func TestNotLike_1(t *testing.T) {
 func TestFixBug_insert_quote_field(t *testing.T) {
 	cond, vals, err := BuildInsert("tb", []map[string]interface{}{
 		{
-			"id": 1,
+			"id":      1,
 			"`order`": 2,
-			"`id`": 3, // I know this is forbidden, but just for test
+			"`id`":    3, // I know this is forbidden, but just for test
 		},
 	})
 	ass := assert.New(t)
 	ass.NoError(err)
 	ass.Equal("INSERT INTO tb (`id`,`order`,id) VALUES (?,?,?)", cond)
-	ass.Equal([]interface{}{3,2,1}, vals)
+	ass.Equal([]interface{}{3, 2, 1}, vals)
 }

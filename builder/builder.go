@@ -21,9 +21,18 @@ var (
 	errHavingUnsupportedOperator = errors.New(`[builder] "_having" contains unsupported operator`)
 	errLockModeValueType         = errors.New(`[builder] the value of "_lockMode" must be of string type`)
 	errNotAllowedLockMode        = errors.New(`[builder] the value of "_lockMode" is not allowed`)
+	errUpdateLimitType           = errors.New(`[builder] the value of "_limit" in update query must be one of int,uint,int64,uint64`)
 
 	errWhereInterfaceSliceType = `[builder] the value of "xxx %s" must be of []interface{} type`
 	errEmptySliceCondition     = `[builder] the value of "%s" must contain at least one element`
+
+	defaultIgnoreKeys = map[string]struct{}{
+		"_orderby":  struct{}{},
+		"_groupby":  struct{}{},
+		"_having":   struct{}{},
+		"_limit":    struct{}{},
+		"_lockMode": struct{}{},
+	}
 )
 
 type whereMapSet struct {
@@ -59,26 +68,23 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 	var groupBy string
 	var having map[string]interface{}
 	var lockMode string
-	copiedWhere := copyWhere(where)
-	if val, ok := copiedWhere["_orderby"]; ok {
+	if val, ok := where["_orderby"]; ok {
 		s, ok := val.(string)
 		if !ok {
 			err = errOrderByValueType
 			return
 		}
 		orderBy = strings.TrimSpace(s)
-		delete(copiedWhere, "_orderby")
 	}
-	if val, ok := copiedWhere["_groupby"]; ok {
+	if val, ok := where["_groupby"]; ok {
 		s, ok := val.(string)
 		if !ok {
 			err = errGroupByValueType
 			return
 		}
 		groupBy = strings.TrimSpace(s)
-		delete(copiedWhere, "_groupby")
 		if "" != groupBy {
-			if h, ok := copiedWhere["_having"]; ok {
+			if h, ok := where["_having"]; ok {
 				having, err = resolveHaving(h)
 				if nil != err {
 					return
@@ -86,10 +92,7 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 			}
 		}
 	}
-	if _, ok := copiedWhere["_having"]; ok {
-		delete(copiedWhere, "_having")
-	}
-	if val, ok := copiedWhere["_limit"]; ok {
+	if val, ok := where["_limit"]; ok {
 		arr, ok := val.([]uint)
 		if !ok {
 			err = errLimitValueType
@@ -108,9 +111,8 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 			begin: begin,
 			step:  step,
 		}
-		delete(copiedWhere, "_limit")
 	}
-	if val, ok := copiedWhere["_lockMode"]; ok {
+	if val, ok := where["_lockMode"]; ok {
 		s, ok := val.(string)
 		if !ok {
 			err = errLockModeValueType
@@ -121,14 +123,13 @@ func BuildSelect(table string, where map[string]interface{}, selectField []strin
 			err = errNotAllowedLockMode
 			return
 		}
-		delete(copiedWhere, "_lockMode")
 	}
-	conditions, err := getWhereConditions(copiedWhere)
+	conditions, err := getWhereConditions(where, defaultIgnoreKeys)
 	if nil != err {
 		return
 	}
 	if having != nil {
-		havingCondition, err1 := getWhereConditions(having)
+		havingCondition, err1 := getWhereConditions(having, defaultIgnoreKeys)
 		if nil != err1 {
 			err = err1
 			return
@@ -169,16 +170,31 @@ func resolveHaving(having interface{}) (map[string]interface{}, error) {
 
 // BuildUpdate work as its name says
 func BuildUpdate(table string, where map[string]interface{}, update map[string]interface{}) (string, []interface{}, error) {
-	conditions, err := getWhereConditions(where)
+	var limit uint
+	if v, ok := where["_limit"]; ok {
+		switch val := v.(type) {
+		case int:
+			limit = uint(val)
+		case uint:
+			limit = val
+		case int64:
+			limit = uint(val)
+		case uint64:
+			limit = uint(val)
+		default:
+			return "", nil, errUpdateLimitType
+		}
+	}
+	conditions, err := getWhereConditions(where, defaultIgnoreKeys)
 	if nil != err {
 		return "", nil, err
 	}
-	return buildUpdate(table, update, conditions...)
+	return buildUpdate(table, update, limit, conditions...)
 }
 
 // BuildDelete work as its name says
 func BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error) {
-	conditions, err := getWhereConditions(where)
+	conditions, err := getWhereConditions(where, defaultIgnoreKeys)
 	if nil != err {
 		return "", nil, err
 	}
@@ -209,7 +225,7 @@ func isStringInSlice(str string, arr []string) bool {
 	return false
 }
 
-func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
+func getWhereConditions(where map[string]interface{}, ignoreKeys map[string]struct{}) ([]Comparable, error) {
 	if len(where) == 0 {
 		return nil, nil
 	}
@@ -218,6 +234,9 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 	var field, operator string
 	var err error
 	for key, val := range where {
+		if _, ok := ignoreKeys[key]; ok {
+			continue
+		}
 		if key == "_or" {
 			var (
 				orWheres          []map[string]interface{}
@@ -231,7 +250,7 @@ func getWhereConditions(where map[string]interface{}) ([]Comparable, error) {
 				if orWhere == nil {
 					continue
 				}
-				orNestWhere, err := getWhereConditions(orWhere)
+				orNestWhere, err := getWhereConditions(orWhere, ignoreKeys)
 				if nil != err {
 					return nil, err
 				}
