@@ -1295,3 +1295,23 @@ func TestFixBug_insert_quote_field(t *testing.T) {
 	ass.Equal("INSERT INTO tb (`id`,`order`,id) VALUES (?,?,?)", cond)
 	ass.Equal([]interface{}{3, 2, 1}, vals)
 }
+
+func TestInsertOnDuplicate(t *testing.T) {
+	cond, vals, err := BuildInsertOnDuplicate(
+		"tb",
+		[]map[string]interface{}{
+			{
+				"a": 1,
+				"b": 2,
+				"c": 3,
+			},
+		},
+		map[string]interface{}{
+			"c": 4,
+		},
+	)
+	ass := assert.New(t)
+	ass.NoError(err)
+	ass.Equal("INSERT INTO tb (a,b,c) VALUES (?,?,?) ON DUPLICATE KEY UPDATE c=?", cond)
+	ass.Equal([]interface{}{1, 2, 3, 4}, vals)
+}

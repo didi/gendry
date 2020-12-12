@@ -397,14 +397,31 @@ func buildInsert(table string, setMap []map[string]interface{}, insertType inser
 	return fmt.Sprintf(format, insertType, quoteField(table), strings.Join(fields, ","), strings.Join(sets, ",")), vals, nil
 }
 
-func buildUpdate(table string, update map[string]interface{}, limit uint, conditions ...Comparable) (string, []interface{}, error) {
-	format := "UPDATE %s SET %s"
+func buildInsertOnDuplicate(table string, data []map[string]interface{}, update map[string]interface{}) (string, []interface{}, error) {
+	insertCond, insertVals, err := buildInsert(table, data, commonInsert)
+	if err != nil {
+		return "", nil, err
+	}
+	sets, updateVals := resolveUpdate(update)
+	format := "%s ON DUPLICATE KEY UPDATE %s"
+	cond := fmt.Sprintf(format, insertCond, sets)
+	vals := append(insertVals, updateVals...)
+	return cond, vals, nil
+}
+
+func resolveUpdate(update map[string]interface{}) (string, []interface{}) {
 	keys, vals := resolveKV(update)
 	var sets string
 	for _, k := range keys {
 		sets += fmt.Sprintf("%s=?,", quoteField(k))
 	}
 	sets = strings.TrimRight(sets, ",")
+	return sets, vals
+}
+
+func buildUpdate(table string, update map[string]interface{}, limit uint, conditions ...Comparable) (string, []interface{}, error) {
+	format := "UPDATE %s SET %s"
+	sets, vals := resolveUpdate(update)
 	cond := fmt.Sprintf(format, quoteField(table), sets)
 	whereString, whereVals := whereConnector("AND", conditions...)
 	if "" != whereString {

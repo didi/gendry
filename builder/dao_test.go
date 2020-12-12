@@ -257,6 +257,47 @@ func TestBuildInsert(t *testing.T) {
 	}
 }
 
+func TestBuildInsertOnDuplicate(t *testing.T) {
+	var data = []struct {
+		table   string
+		data    []map[string]interface{}
+		update  map[string]interface{}
+		outErr  error
+		outStr  string
+		outVals []interface{}
+	}{
+		{
+			table: "tb",
+			data: []map[string]interface{}{
+				{
+					"a": 1,
+					"b": 2,
+					"c": 3,
+				},
+				{
+					"a": 4,
+					"b": 5,
+					"c": 6,
+				},
+			},
+			update: map[string]interface{}{
+				"b": 7,
+				"c": 8,
+			},
+			outErr:  nil,
+			outStr:  "INSERT INTO tb (a,b,c) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE b=?,c=?",
+			outVals: []interface{}{1, 2, 3, 4, 5, 6, 7, 8},
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range data {
+		cond, vals, err := buildInsertOnDuplicate(tc.table, tc.data, tc.update)
+		ass.Equal(tc.outErr, err)
+		ass.Equal(tc.outStr, cond)
+		ass.Equal(tc.outVals, vals)
+	}
+}
+
 func TestBuildUpdate(t *testing.T) {
 	var data = []struct {
 		table      string

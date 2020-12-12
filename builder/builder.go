@@ -216,6 +216,11 @@ func BuildReplaceInsert(table string, data []map[string]interface{}) (string, []
 	return buildInsert(table, data, replaceInsert)
 }
 
+// BuildInsertOnDuplicateKey builds an INSERT ... ON DUPLICATE KEY UPDATE clause.
+func BuildInsertOnDuplicate(table string, data []map[string]interface{}, update map[string]interface{}) (string, []interface{}, error) {
+	return buildInsertOnDuplicate(table, data, update)
+}
+
 func isStringInSlice(str string, arr []string) bool {
 	for _, s := range arr {
 		if s == str {
