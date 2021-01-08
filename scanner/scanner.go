@@ -189,7 +189,8 @@ func ScanMapClose(rows Rows) ([]map[string]interface{}, error) {
 }
 
 // ScanClose is the same as Scan and helps you Close the rows
-// Don't exec the rows.Close after calling this
+// Not necessary exec the rows.Close after calling this.
+// Close is idempotent and does not affect the result of Err.
 func ScanClose(rows Rows, target interface{}) error {
 	err := Scan(rows, target)
 	if nil != rows {
