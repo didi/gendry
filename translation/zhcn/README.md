@@ -147,7 +147,7 @@ scaner.Scan(rows, &student)
 **scaner.SetTagName是全局设置，为了避免歧义，只允许设置一次，一般在初始化DB阶段进行此项设置**
 
 ### ScanMap
-ScanMap方法返回的是一个map，有时候你可能不太像定义一个结构体去存你的中间结果，那么ScanMap或许比较有帮助
+ScanMap方法返回的是一个map，有时候你可能不太想定义一个结构体去存你的中间结果，那么ScanMap或许比较有帮助
 
 ```go
 rows,_ := db.Query("select name,m_age from person")
