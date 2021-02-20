@@ -156,7 +156,7 @@ func resolveHaving(having interface{}) (map[string]interface{}, error) {
 	}
 	copiedMap := make(map[string]interface{})
 	for key, val := range havingMap {
-		_, operator, err := splitKey(key)
+		_, operator, err := splitKey(key, val)
 		if nil != err {
 			return nil, err
 		}
@@ -264,7 +264,7 @@ func getWhereConditions(where map[string]interface{}, ignoreKeys map[string]stru
 			comparables = append(comparables, OrWhere(orWhereComparable))
 			continue
 		}
-		field, operator, err = splitKey(key)
+		field, operator, err = splitKey(key, val)
 		if nil != err {
 			return nil, err
 		}
@@ -415,7 +415,7 @@ func convertInterfaceToMap(val interface{}) ([]interface{}, bool) {
 	return interfaceSlice, true
 }
 
-func splitKey(key string) (field string, operator string, err error) {
+func splitKey(key string, val interface{}) (field string, operator string, err error) {
 	key = strings.Trim(key, " ")
 	if "" == key {
 		err = errSplitEmptyKey
@@ -425,6 +425,9 @@ func splitKey(key string) (field string, operator string, err error) {
 	if idx == -1 {
 		field = key
 		operator = "="
+		if reflect.ValueOf(val).Kind() == reflect.Slice {
+			operator = "in"
+		}
 	} else {
 		field = key[:idx]
 		operator = strings.Trim(key[idx+1:], " ")
