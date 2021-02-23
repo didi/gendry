@@ -44,7 +44,9 @@ builder不是一个ORM（我们开发Gendry的重要原因之一就是不喜欢O
 
 ```go
 where := map[string]interface{}{
-	"city in": []string{"beijing", "shanghai"},
+	"city": []string{"beijing", "shanghai"},
+	// 默认可以省略 in 操作符，等同于:
+	// "city in": []string{"beijing", "shanghai"},
 	"score": 5,
 	"age >": 35,
 	"address": builder.IsNotNull,
@@ -59,6 +61,13 @@ cond, values, err := builder.BuildSelect(table, where, selectFields)
 //values = []interface{}{"beijing", "shanghai", 5, 35}
 
 rows,err := db.Query(cond, values...)
+```
+
+默认 `where` 参数中可以根据value(reflect.Slice)类型来自动的添加 `in` 参数
+```go
+where := map[string]interface{}{
+	"city": []string{"beijing", "shanghai"},
+}
 ```
 
 如果你想清除where map中的零值可以使用 builder.OmitEmpty
@@ -78,7 +87,7 @@ finalWhere := builder.OmitEmpty(where, []string{"score", "age"})
 ```go
 where := map[string]interface{}{
     "score > ": 100,
-    "city in": []interface{}{"Beijing", "Shijiazhuang",}
+    "city": []interface{}{"Beijing", "Shijiazhuang",}
 }
 // AggregateSum,AggregateMax,AggregateMin,AggregateCount,AggregateAvg is supported
 result, err := AggregateQuery(ctx, db, "tableName", where, AggregateSum("age"))
