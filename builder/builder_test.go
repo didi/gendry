@@ -29,6 +29,7 @@ func TestBuildLockMode(t *testing.T) {
 					"foo":      "bar",
 					"qq":       "tt",
 					"age in":   []interface{}{1, 3, 5, 7, 9},
+					"vx":       []interface{}{1, 3, 5},
 					"faith <>": "Muslim",
 					"_or": []map[string]interface{}{
 						{
@@ -58,8 +59,8 @@ func TestBuildLockMode(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (((aa=? AND bb=?) OR (((neeest_ff IN (?,?) AND neeest_ee!=?) OR (neeest_gg=? AND neeest_hh NOT IN (?,?))) AND cc=? AND dd IN (?,?))) AND foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,? LOCK IN SHARE MODE",
-				vals: []interface{}{11, "xswl", 34, 59, "dw42", 1259, 358, 1245, "234", 7, 8, "bar", "tt", 1, 3, 5, 7, 9, "Muslim", 0, 100},
+				cond: "SELECT id,name,age FROM tb WHERE (((aa=? AND bb=?) OR (((neeest_ff IN (?,?) AND neeest_ee!=?) OR (neeest_gg=? AND neeest_hh NOT IN (?,?))) AND cc=? AND dd IN (?,?))) AND foo=? AND qq=? AND age IN (?,?,?,?,?) AND vx IN (?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,? LOCK IN SHARE MODE",
+				vals: []interface{}{11, "xswl", 34, 59, "dw42", 1259, 358, 1245, "234", 7, 8, "bar", "tt", 1, 3, 5, 7, 9, 1, 3, 5, "Muslim", 0, 100},
 				err:  nil,
 			},
 		},
@@ -157,13 +158,14 @@ func TestBuildHaving(t *testing.T) {
 					"_having": map[string]interface{}{
 						"total >=": 1000,
 						"total <":  50000,
+						"vx":       []interface{}{1, 3, 5},
 					},
 				},
 				selectField: []string{"name, count(price) as total"},
 			},
 			out: outStruct{
-				cond: "SELECT name, count(price) as total FROM tb WHERE (age>?) GROUP BY name HAVING (total>=? AND total<?)",
-				vals: []interface{}{23, 1000, 50000},
+				cond: "SELECT name, count(price) as total FROM tb WHERE (age>?) GROUP BY name HAVING (vx IN (?,?,?) AND total>=? AND total<?)",
+				vals: []interface{}{23, 1, 3, 5, 1000, 50000},
 				err:  nil,
 			},
 		},
@@ -519,6 +521,7 @@ func Test_BuildSelect(t *testing.T) {
 					"foo":      "bar",
 					"qq":       "tt",
 					"age in":   []interface{}{1, 3, 5, 7, 9},
+					"vx":       []interface{}{1, 3, 5},
 					"faith <>": "Muslim",
 					"_or": []map[string]interface{}{
 						{
@@ -547,8 +550,8 @@ func Test_BuildSelect(t *testing.T) {
 				fields: []string{"id", "name", "age"},
 			},
 			out: outStruct{
-				cond: "SELECT id,name,age FROM tb WHERE (((aa=? AND bb=?) OR (((neeest_ff IN (?,?) AND neeest_ee!=?) OR (neeest_gg=? AND neeest_hh NOT IN (?,?))) AND cc=? AND dd IN (?,?))) AND foo=? AND qq=? AND age IN (?,?,?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,?",
-				vals: []interface{}{11, "xswl", 34, 59, "dw42", 1259, 358, 1245, "234", 7, 8, "bar", "tt", 1, 3, 5, 7, 9, "Muslim", 0, 100},
+				cond: "SELECT id,name,age FROM tb WHERE (((aa=? AND bb=?) OR (((neeest_ff IN (?,?) AND neeest_ee!=?) OR (neeest_gg=? AND neeest_hh NOT IN (?,?))) AND cc=? AND dd IN (?,?))) AND foo=? AND qq=? AND age IN (?,?,?,?,?) AND vx IN (?,?,?) AND faith!=?) GROUP BY department ORDER BY age DESC,score ASC LIMIT ?,?",
+				vals: []interface{}{11, "xswl", 34, 59, "dw42", 1259, 358, 1245, "234", 7, 8, "bar", "tt", 1, 3, 5, 7, 9, 1, 3, 5, "Muslim", 0, 100},
 				err:  nil,
 			},
 		},

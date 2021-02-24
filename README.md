@@ -55,7 +55,10 @@ builder isn't an ORM, in fact one of the most important reasons we create Gendry
 
 ```go
 where := map[string]interface{}{
-	"city in": []string{"beijing", "shanghai"},
+	"city": []string{"beijing", "shanghai"},
+	// The in operator can be omitted by default,
+	// which is equivalent to:
+	// "city in": []string{"beijing", "shanghai"},
 	"score": 5,
 	"age >": 35,
 	"address": builder.IsNotNull,
@@ -81,12 +84,27 @@ cond, values, err := builder.BuildSelect(table, where, selectFields)
 
 rows, err := db.Query(cond, values...)
 ```
+
+In the `where` param, automatically add 'in' operator by value type(reflect.Slice).
+
+```go
+where := map[string]interface{}{
+	"city": []string{"beijing", "shanghai"},
+}
+```
+the same as
+```go
+where := map[string]interface{}{
+	"city in": []string{"beijing", "shanghai"},
+}
+```
+
 And, the library provide a useful API for executing aggregate queries like count, sum, max, min, avg
 
 ```go
 where := map[string]interface{}{
     "score > ": 100,
-    "city in": []interface{}{"Beijing", "Shijiazhuang", }
+    "city": []interface{}{"Beijing", "Shijiazhuang", }
 }
 // AggregateSum, AggregateMax, AggregateMin, AggregateCount, AggregateAvg are supported
 result, err := AggregateQuery(ctx, db, "tableName", where, AggregateSum("age"))
