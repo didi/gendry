@@ -363,7 +363,9 @@ func convert(mapValue interface{}, valuei reflect.Value, wrapErr convertErrWrapp
 	//time.Time to string
 	switch assertT := mapValue.(type) {
 	case time.Time:
-		return handleConvertTime(assertT, mvt, vit, &valuei, wrapErr)
+		if vit.Kind() == reflect.String {
+			return handleConvertTime(assertT, mvt, vit, &valuei, wrapErr)
+		}
 	}
 
 	if scanner, ok := valuei.Addr().Interface().(sql.Scanner); ok {
@@ -498,5 +500,6 @@ func handleConvertTime(assertT time.Time, mvt, vit reflect.Type, valuei *reflect
 		valuei.SetString(sTime)
 		return nil
 	}
+
 	return wrapErr(mvt, vit)
 }

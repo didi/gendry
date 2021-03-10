@@ -1198,3 +1198,43 @@ func TestScanMapDecode(t *testing.T) {
 		ass.Equal(tc.expect, result, "case #%d fail", idx)
 	}
 }
+
+// FormattedTime formatted as yyyy-mm-dd hh:MM:ss.sss in json encode
+type FormattedTime struct {
+	time.Time
+}
+
+// Scan implements driver.Scanner interface
+func (t *FormattedTime) Scan(value interface{}) error {
+	if value == nil {
+		t.Time = time.Time{}
+		return nil
+	}
+
+	if theTime, ok := value.(time.Time); ok {
+		t.Time = theTime
+	}
+
+	return nil
+}
+
+func TestBind_Time_2_CustomStruct(t *testing.T) {
+	user := struct {
+		BornedAt FormattedTime `ddb:"borned_at"`
+	}{}
+
+	now := time.Now()
+
+	result := map[string]interface{}{
+		"borned_at": now,
+	}
+
+	expected := FormattedTime{
+		Time: now,
+	}
+
+	err := bind(result, &user)
+
+	assert.NoError(t, err)
+	assert.Truef(t, expected.Equal(user.BornedAt.Time), "want %v, got %v", expected, user.BornedAt)
+}
