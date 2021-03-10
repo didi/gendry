@@ -495,11 +495,7 @@ func byteUnmarshal(mapValueSlice []byte, valuei *reflect.Value, wrapErr convertE
 }
 
 func handleConvertTime(assertT time.Time, mvt, vit reflect.Type, valuei *reflect.Value, wrapErr convertErrWrapper) error {
-	if vit.Kind() == reflect.String {
-		sTime := assertT.Format(cTimeFormat)
-		valuei.SetString(sTime)
-		return nil
-	}
-
-	return wrapErr(mvt, vit)
+	sTime := assertT.Format(cTimeFormat)
+	valuei.SetString(sTime)
+	return nil
 }
