@@ -1219,6 +1219,8 @@ func (t *FormattedTime) Scan(value interface{}) error {
 }
 
 func TestBind_Time_2_CustomStruct(t *testing.T) {
+	ass := assert.New(t)
+
 	user := struct {
 		BornedAt FormattedTime `ddb:"borned_at"`
 	}{}
@@ -1235,6 +1237,6 @@ func TestBind_Time_2_CustomStruct(t *testing.T) {
 
 	err := bind(result, &user)
 
-	assert.NoError(t, err)
-	assert.Truef(t, expected.Equal(user.BornedAt.Time), "want %v, got %v", expected, user.BornedAt)
+	ass.NoError(err)
+	ass.Truef(expected.Equal(user.BornedAt.Time), "want %v, got %v", expected, user.BornedAt)
 }
