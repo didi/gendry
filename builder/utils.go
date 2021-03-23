@@ -127,10 +127,19 @@ func OmitEmpty(where map[string]interface{}, omitKey []string) map[string]interf
 	return where
 }
 
+type IsZeroer interface {
+	IsZero() bool
+}
+
+var IsZeroType = reflect.TypeOf((*IsZeroer)(nil)).Elem()
+
 // isZero reports whether a value is a zero value
 // Including support: Bool, Array, String, Float32, Float64, Int, Int8, Int16, Int32, Int64, Uint, Uint8, Uint16, Uint32, Uint64, Uintptr
 // Map, Slice, Interface, Struct
 func isZero(v reflect.Value) bool {
+	if v.IsValid() && v.Type().Implements(IsZeroType) {
+		return v.Interface().(IsZeroer).IsZero()
+	}
 	switch v.Kind() {
 	case reflect.Bool:
 		return !v.Bool()

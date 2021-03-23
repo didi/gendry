@@ -5,6 +5,7 @@ import (
 	"math"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -252,6 +253,12 @@ func TestOmitEmpty(t *testing.T) {
 			map[string]interface{}{"stru1": stru{x: "s", y: 0}, "stru2": stru{x: "", y: 0}},
 			[]string{"stru1", "stru2"},
 			map[string]interface{}{"stru1": stru{x: "s", y: 0}},
+		},
+		// implement zero
+		{
+			map[string]interface{}{"time": time.Time{}},
+			[]string{"time"},
+			map[string]interface{}{},
 		},
 	}
 	ass := assert.New(t)
