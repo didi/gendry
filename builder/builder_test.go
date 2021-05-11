@@ -749,6 +749,21 @@ func TestNamedQuery(t *testing.T) {
 			vals: []interface{}{"f1", "f2", 10, "beijing", "shanghai", "chengdu"},
 			err:  nil,
 		},
+		{
+			sql: `select {{foo}},{{bar}} from tb where address in {{addr}} and {{where}}`,
+			data: map[string]interface{}{
+				"foo":  "f1",
+				"bar":  "f2",
+				"addr": []string{"beijing", "shanghai", "chengdu"},
+				"where": map[string]interface{}{
+					"name in": []string{"1", "2"},
+					"age":     10,
+				},
+			},
+			cond: `select ?,? from tb where address in (?,?,?) and (age=? AND name IN (?,?))`,
+			vals: []interface{}{"f1", "f2", "beijing", "shanghai", "chengdu", 10, "1", "2"},
+			err:  nil,
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range testData {

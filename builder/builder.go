@@ -474,16 +474,36 @@ func NamedQuery(sql string, data map[string]interface{}) (string, []interface{},
 			err = fmt.Errorf("%s not found", paramName)
 			return ""
 		}
+
 		v := reflect.ValueOf(val)
-		if v.Type().Kind() != reflect.Slice {
-			vals = append(vals, val)
-			return paramPlaceHolder
+		if v.Type().Kind() == reflect.Slice {
+			length := v.Len()
+			for i := 0; i < length; i++ {
+				vals = append(vals, v.Index(i).Interface())
+			}
+			return createMultiPlaceholders(length)
 		}
-		length := v.Len()
-		for i := 0; i < length; i++ {
-			vals = append(vals, v.Index(i).Interface())
+
+		if v.Type().Kind() == reflect.Map {
+			where, ok := val.(map[string]interface{})
+			if !ok {
+				err = fmt.Errorf("%s not expected map", paramName)
+				return ""
+			}
+
+			conditions, errLocal := getWhereConditions(where, defaultIgnoreKeys)
+			if errLocal != nil {
+				err = errLocal
+				return ""
+			}
+
+			whereString, whereVals := whereConnector("AND", conditions...)
+			vals = append(vals, whereVals...)
+			return whereString
 		}
-		return createMultiPlaceholders(length)
+
+		vals = append(vals, val)
+		return paramPlaceHolder
 	})
 	if nil != err {
 		return "", nil, err
