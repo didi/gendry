@@ -336,6 +336,7 @@ func TestBuildUpdate(t *testing.T) {
 func TestBuildDelete(t *testing.T) {
 	var data = []struct {
 		table   string
+		limit   uint
 		where   []Comparable
 		outStr  string
 		outVals []interface{}
@@ -343,6 +344,7 @@ func TestBuildDelete(t *testing.T) {
 	}{
 		{
 			table: "tb",
+			limit: 0,
 			where: []Comparable{
 				Eq(map[string]interface{}{
 					"foo": 1,
@@ -354,10 +356,24 @@ func TestBuildDelete(t *testing.T) {
 			outVals: []interface{}{2, "tt", 1},
 			outErr:  nil,
 		},
+		{
+			table: "tb",
+			limit: 10,
+			where: []Comparable{
+				Eq(map[string]interface{}{
+					"foo": 1,
+					"bar": 2,
+					"baz": "tt",
+				}),
+			},
+			outStr:  "DELETE FROM tb WHERE (bar=? AND baz=? AND foo=?) LIMIT ?",
+			outVals: []interface{}{2, "tt", 1, 10},
+			outErr:  nil,
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		actualStr, actualVals, err := buildDelete(tc.table, tc.where...)
+		actualStr, actualVals, err := buildDelete(tc.table, tc.limit, tc.where...)
 		ass.Equal(tc.outErr, err)
 		ass.Equal(tc.outStr, actualStr)
 		ass.Equal(tc.outVals, actualVals)

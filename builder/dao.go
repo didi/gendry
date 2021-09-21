@@ -18,13 +18,13 @@ var (
 	}
 )
 
-//the order of a map is unpredicatable so we need a sort algorithm to sort the fields
-//and make it predicatable
+// the order of a map is unpredicatable so we need a sort algorithm to sort the fields
+// and make it predicatable
 var (
 	defaultSortAlgorithm = sort.Strings
 )
 
-//Comparable requires type implements the Build method
+// Comparable requires type implements the Build method
 type Comparable interface {
 	Build() ([]string, []interface{})
 }
@@ -123,58 +123,58 @@ func (l NotLike) Build() ([]string, []interface{}) {
 	return cond, vals
 }
 
-//Eq means equal(=)
+// Eq means equal(=)
 type Eq map[string]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (e Eq) Build() ([]string, []interface{}) {
 	return build(e, "=")
 }
 
-//Ne means Not Equal(!=)
+// Ne means Not Equal(!=)
 type Ne map[string]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (n Ne) Build() ([]string, []interface{}) {
 	return build(n, "!=")
 }
 
-//Lt means less than(<)
+// Lt means less than(<)
 type Lt map[string]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (l Lt) Build() ([]string, []interface{}) {
 	return build(l, "<")
 }
 
-//Lte means less than or equal(<=)
+// Lte means less than or equal(<=)
 type Lte map[string]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (l Lte) Build() ([]string, []interface{}) {
 	return build(l, "<=")
 }
 
-//Gt means greater than(>)
+// Gt means greater than(>)
 type Gt map[string]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (g Gt) Build() ([]string, []interface{}) {
 	return build(g, ">")
 }
 
-//Gte means greater than or equal(>=)
+// Gte means greater than or equal(>=)
 type Gte map[string]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (g Gte) Build() ([]string, []interface{}) {
 	return build(g, ">=")
 }
 
-//In means in
+// In means in
 type In map[string][]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (i In) Build() ([]string, []interface{}) {
 	if nil == i || 0 == len(i) {
 		return nil, nil
@@ -199,10 +199,10 @@ func buildIn(field string, vals []interface{}) (cond string) {
 	return
 }
 
-//NotIn means not in
+// NotIn means not in
 type NotIn map[string][]interface{}
 
-//Build implements the Comparable interface
+// Build implements the Comparable interface
 func (i NotIn) Build() ([]string, []interface{}) {
 	if nil == i || 0 == len(i) {
 		return nil, nil
@@ -435,7 +435,7 @@ func buildUpdate(table string, update map[string]interface{}, limit uint, condit
 	return cond, vals, nil
 }
 
-func buildDelete(table string, conditions ...Comparable) (string, []interface{}, error) {
+func buildDelete(table string, limit uint, conditions ...Comparable) (string, []interface{}, error) {
 	whereString, vals := whereConnector("AND", conditions...)
 	if "" == whereString {
 		return fmt.Sprintf("DELETE FROM %s", table), nil, nil
@@ -443,6 +443,12 @@ func buildDelete(table string, conditions ...Comparable) (string, []interface{},
 	format := "DELETE FROM %s WHERE %s"
 
 	cond := fmt.Sprintf(format, quoteField(table), whereString)
+
+	if limit > 0 {
+		cond += " LIMIT ?"
+		vals = append(vals, int(limit))
+	}
+
 	return cond, vals, nil
 }
 
