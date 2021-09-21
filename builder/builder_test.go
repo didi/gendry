@@ -396,6 +396,22 @@ func Test_BuildDelete(t *testing.T) {
 				err:  nil,
 			},
 		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"age >=":   21,
+					"sex in":   []interface{}{"male", "female"},
+					"hobby in": []interface{}{"soccer", "basketball", "tenis"},
+					"_limit":   10,
+				},
+			},
+			out: outStruct{
+				cond: "DELETE FROM tb WHERE (hobby IN (?,?,?) AND sex IN (?,?) AND age>=?) LIMIT ?",
+				vals: []interface{}{"soccer", "basketball", "tenis", "male", "female", 21, 10},
+				err:  nil,
+			},
+		},
 	}
 	for _, tc := range data {
 		cond, vals, err := BuildDelete(tc.in.table, tc.in.where)

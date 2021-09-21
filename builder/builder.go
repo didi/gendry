@@ -194,11 +194,26 @@ func BuildUpdate(table string, where map[string]interface{}, update map[string]i
 
 // BuildDelete work as its name says
 func BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error) {
+	var limit uint
+	if v, ok := where["_limit"]; ok {
+		switch val := v.(type) {
+		case int:
+			limit = uint(val)
+		case uint:
+			limit = val
+		case int64:
+			limit = uint(val)
+		case uint64:
+			limit = uint(val)
+		default:
+			return "", nil, errUpdateLimitType
+		}
+	}
 	conditions, err := getWhereConditions(where, defaultIgnoreKeys)
 	if nil != err {
 		return "", nil, err
 	}
-	return buildDelete(table, conditions...)
+	return buildDelete(table, limit, conditions...)
 }
 
 // BuildInsert work as its name says
