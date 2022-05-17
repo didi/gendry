@@ -49,14 +49,17 @@ ScanMapClose is the same as ScanMap but it also close the rows
 Test cases blow may make sense
 
 ```go
-package scaner
+package scaner_test
 
 import (
+	"github.com/didi/gendry/scanner"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestMap(t *testing.T) {
+	// you can improve the performance of `scanner.Map` by scanner.EnableMapNameCache(true)
+	scanner.EnableMapNameCache(true)
 	type Person struct {
 		Name string `ddb:"name"`
 		Age  int    `ddb:"age"`
@@ -65,14 +68,14 @@ func TestMap(t *testing.T) {
 	a := Person{"deen", 22, 1}
 	b := &Person{"caibirdme", 23, 1}
 	c := &b
-	mapA, err := Map(a, DefaultTagName)
+	mapA, err := scanner.Map(a, scanner.DefaultTagName)
 	ass := assert.New(t)
 	ass.NoError(err)
 	ass.Equal("deen", mapA["name"])
 	ass.Equal(22, mapA["age"])
 	_, ok := mapA["foo"]
 	ass.False(ok)
-	mapB, err := Map(c, "")
+	mapB, err := scanner.Map(c, "")
 	ass.NoError(err)
 	ass.Equal("caibirdme", mapB["Name"])
 	ass.Equal(23, mapB["Age"])
