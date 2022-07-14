@@ -6,7 +6,7 @@
 
 **gendry** is a Go library that helps you operate database. Based on `go-sql-driver/mysql`, it provides a series of simple but useful tools to prepare parameters for calling methods in standard library `database/sql`.
 
-The name **gendry** comes from the role in the hottest drama `The Game of Throne`, in which Gendry is not only the bastardy of the late king Robert Baratheon but also a skilled blacksmith. Like the one in drama, this library also forge something which is called `SQL`.
+The name **gendry** comes from the role in the hottest drama: `The Game of Throne`, in which Gendry is not only the bastardy of the late king Robert Baratheon but also a skilled blacksmith. Like the one in drama, this library also forges something called `SQL`.
 
 **gendry** consists of three isolated parts, and you can use each one of them partially:
 
@@ -16,14 +16,14 @@ The name **gendry** comes from the role in the hottest drama `The Game of Throne
 * [CLI tool](#tools)
 
 ### Translation
-* [中文](translation/zhcn/README.md)
+* [Chinese Simplified (中文)](translation/zhcn/README.md)
 
 
 
 <h3 id="manager">Manager</h3>
 
-manager is used for initializing database connection pool(i.e `sql.DB`),
-you can set almost all parameters for those mysql driver supported.For example, initializing a database connection pool:
+The manager is used for initializing the database connection pool(i.e., `sql.DB`).
+You can set almost all parameters for those MySQL drivers supported. For example, initializing a database connection pool:
 
 ``` go
 var db *sql.DB
@@ -38,7 +38,7 @@ db, err = manager
 			manager.SetReadTimeout(1 * time.Second)
 		).Port(3302).Open(true)
 ```
-In fact, all things manager does is just for concatting the `dataSourceName`
+In fact, all things manager does is just to generate the `dataSourceName`
 
 the format of a `dataSourceName` is：
 
@@ -46,12 +46,12 @@ the format of a `dataSourceName` is：
 [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]
 ```
 
-manager is based on `go-mysql-driver/mysql`, and if you don't know some of the manager.SetXXX series functions, see it on [mysql driver's github home page](https://github.com/go-sql-driver/mysql).And for more details see [manager's doc](manager/README.md)
+Manager is based on `go-mysql-driver/mysql`. If you don't know some of the manager and SetXXX series functions, see it on [mysql driver's github home page](https://github.com/go-sql-driver/mysql). For more details see [manager's doc](manager/README.md)
 
 <h3 id="builder">Builder</h3>
-builder as its name says, is for building sql. Writing sql manually is intuitive but somewhat difficult to maintain.And for `where in`, if you have huge amount of elements in the `in` set, it's very hard to write.
+Builder as its name says is for building SQL. Writing SQL manually is intuitive but somewhat difficult to maintain. And for `where in,` if you have a huge amount of elements in the `in` set, it's very hard to write.
 
-builder isn't an ORM, in fact one of the most important reasons we create Gendry is we don't like ORM. So Gendry just provides some simple APIs to help you building sqls:
+Builder isn't an ORM. In fact, one of the most important reasons we create Gendry is we don't like ORM. So Gendry just provides some simple APIs to help you build SQLs:
 
 ```go
 where := map[string]interface{}{
@@ -85,7 +85,7 @@ cond, values, err := builder.BuildSelect(table, where, selectFields)
 rows, err := db.Query(cond, values...)
 ```
 
-In the `where` param, automatically add 'in' operator by value type(reflect.Slice).
+In the `where` param, `in` operator is automatically added by value type(reflect.Slice).
 
 ```go
 where := map[string]interface{}{
@@ -99,7 +99,7 @@ where := map[string]interface{}{
 }
 ```
 
-And, the library provide a useful API for executing aggregate queries like count, sum, max, min, avg
+Besides, the library provide a useful API for executing aggregate queries like count, sum, max, min, avg
 
 ```go
 where := map[string]interface{}{
@@ -115,7 +115,7 @@ result, err = AggregateQuery(ctx, db, "tableName", where, AggregateAvg("score"))
 averageScore := result.Float64()
 ```
 
-If you want to clear the zero value in the where map, you can use builder.OmitEmpty
+If you want to clear the value '0' in the where map, you can use builder.OmitEmpty
 ``` go
 where := map[string]interface{}{
 		"score": 0,
@@ -137,14 +137,14 @@ cond, vals, err := builder.NamedQuery("select * from tb where name={{name}} and 
 assert.Equal("select * from tb where name=? and id in (select uid from anothertable where score in (?,?,?))", cond)
 assert.Equal([]interface{}{"caibirdme", 3.0, 5.8, 7.9}, vals)
 ```
-slice type can be expanded automatically according to its length, thus these sqls are very convenient for DBA to review.  
+slice type can be expanded automatically according to its length. Thus, these SQLs are very convenient for DBA to review.  
 **For critical system, this is recommended**
 
 For more detail, see [builder's doc](builder/README.md) or just use `godoc`
 
 <h3 id="scanner">Scanner</h3>
-For each response from mysql, you want to map it with your well-defined structure.
-Scanner provides a very easy API to do this, it's based on reflection:
+For each response from MySQL, you want to map it with your well-defined structure.
+Scanner provides a straightforward API to do this, it's based on reflection:
 
 ##### standard library
 ```go
@@ -178,7 +178,7 @@ var students []Person
 
 scanner.Scan(rows, &students)
 ```
-Types which implement the interface
+Types that implement the interface
 ```go
 type ByteUnmarshaler interface {
 	UnmarshalByte(data []byte) error
@@ -232,7 +232,7 @@ for _, record := range result {
 }
 ```
 ScanMap scans data from rows and returns a `[]map[string]interface{}`  
-int, float, string type may be stored as []uint8 by mysql driver, ScanMap just copy those value into the map. If you're sure that there's no binary data type in your mysql table(in most cases, this is true), you can use ScanMapDecode instead which will convert []uint8 to int, float64 or string
+int, float, string type may be stored as []uint8 by MySQL driver. ScanMap copies those values into the map. If you're sure that there's no binary data type in your MySQL table(in most cases, this is true), you can use ScanMapDecode instead which will convert []uint8 to int, float64 or string
 
 For more detail, see [scanner's doc](scanner/README.md)
 
@@ -242,7 +242,7 @@ PS：
 * The second parameter of Scan must be a reference
 
 <h3 id="tools">Tools</h3>
-Besides APIs above, Gendry provide a [CLI tool](https://github.com/caibirdme/gforge) to help generating codes.
+Besides APIs above, Gendry provides a [CLI tool](https://github.com/caibirdme/gforge) to help generating codes.
 
 
 
