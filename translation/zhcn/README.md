@@ -70,6 +70,27 @@ where := map[string]interface{}{
 }
 ```
 
+如果你有多个 `or` 条件可以是用 `_or` 前缀开头的字符串来标识 `or` 语句
+``` go
+where := map[string]interface{}{
+        // 位置条件（15号线或朝阳区）
+        "_or_location": []map[string]interface{}{{
+            "subway": "beijing_15",  
+        }, {
+            "district": "Chaoyang", 
+        }},
+        // 类型（有煤气或有电梯）
+        "_or_functions": []map[string]interface{}{{
+            "has_gas": true,
+        }, {
+            "has_lift": true,
+        }},
+}
+
+// query = (((subway=?) OR (district=?)) AND ((has_gas=?) OR (has_lift=?)))
+// args = ["beijing_15", "Chaoyang", true, true]
+```
+
 如果你想清除where map中的零值可以使用 builder.OmitEmpty
 ``` go
 where := map[string]interface{}{

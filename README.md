@@ -115,7 +115,28 @@ result, err = AggregateQuery(ctx, db, "tableName", where, AggregateAvg("score"))
 averageScore := result.Float64()
 ```
 
+multi `or` condition can use multi `_or` prefix string mark 
+``` go
+where := map[string]interface{}{
+    // location
+    "_or_location": []map[string]interface{}{{
+        "subway": "beijing_15", 
+    }, {
+        "district": "Chaoyang", 
+    }},
+    // functions
+    "_or_functions": []map[string]interface{}{{
+         "has_gas": true,
+    }, {
+        "has_lift": true,
+}}}
+
+// query = (((subway=?) OR (district=?)) AND ((has_gas=?) OR (has_lift=?)))
+// args = ["beijing_15", "Chaoyang", true, true]
+```
+
 If you want to clear the value '0' in the where map, you can use builder.OmitEmpty
+
 ``` go
 where := map[string]interface{}{
 		"score": 0,

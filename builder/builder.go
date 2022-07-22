@@ -242,7 +242,7 @@ func getWhereConditions(where map[string]interface{}, ignoreKeys map[string]stru
 		if _, ok := ignoreKeys[key]; ok {
 			continue
 		}
-		if key == "_or" {
+		if strings.HasPrefix(key, "_or") {
 			var (
 				orWheres          []map[string]interface{}
 				orWhereComparable []Comparable
