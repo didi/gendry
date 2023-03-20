@@ -23,7 +23,7 @@ type ByteUnmarshaler interface {
 	UnmarshalByte(data []byte) error
 }
 
-//Rows defines methods that scanner needs, which database/sql.Rows already implements
+// Rows defines methods that scanner needs, which database/sql.Rows already implements
 type Rows interface {
 	Close() error
 
@@ -41,7 +41,7 @@ const (
 )
 
 var (
-	userDefinedTagName string
+	userDefinedTagName *string
 	//ErrTargetNotSettable means the second param of Bind is not settable
 	ErrTargetNotSettable = errors.New("[scanner]: target is not settable! a pointer is required")
 	//ErrNilRows means the first param can't be a nil
@@ -52,15 +52,15 @@ var (
 	ErrEmptyResult = errors.New(`[scanner]: empty result`)
 )
 
-//SetTagName can be set only once
+// SetTagName can be set only once
 func SetTagName(name string) {
-	if userDefinedTagName != "" {
+	if userDefinedTagName != nil {
 		return
 	}
-	userDefinedTagName = name
+	userDefinedTagName = &name
 }
 
-//ScanErr will be returned if an underlying type couldn't be AssignableTo type of target field
+// ScanErr will be returned if an underlying type couldn't be AssignableTo type of target field
 type ScanErr struct {
 	structName, fieldName string
 	from, to              reflect.Type
@@ -202,7 +202,7 @@ func ScanClose(rows Rows, target interface{}) error {
 	return err
 }
 
-//caller must guarantee to pass a &slice as the second param
+// caller must guarantee to pass a &slice as the second param
 func bindSlice(arr []map[string]interface{}, target interface{}) error {
 	targetObj := reflect.ValueOf(target)
 	if !targetObj.Elem().CanSet() {
@@ -333,11 +333,12 @@ func resolveDataFromRows(rows Rows) ([]map[string]interface{}, error) {
 }
 
 func lookUpTagName(typeObj reflect.StructField) (string, bool) {
-	var tName string
-	if "" != userDefinedTagName {
-		tName = userDefinedTagName
-	} else {
-		tName = DefaultTagName
+	tName := DefaultTagName
+	if userDefinedTagName != nil {
+		tName = *userDefinedTagName
+	}
+	if tName == "" {
+		return typeObj.Name, true
 	}
 	name, ok := typeObj.Tag.Lookup(tName)
 	if !ok {

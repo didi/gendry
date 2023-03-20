@@ -948,15 +948,37 @@ func Test_sql_scanner_with_pointer(t *testing.T) {
 	}
 }
 
+func TestBindWithEmptyTag(t *testing.T) {
+	emptyStr := ""
+	userDefinedTagName = &emptyStr
+	type Person struct {
+		Name string
+		Age  int
+	}
+	var p Person
+	name := "deen"
+	age := 23
+	var mp = map[string]interface{}{
+		"Name": name,
+		"Age":  age,
+	}
+	err := bind(mp, &p)
+	should := require.New(t)
+	should.NoError(err)
+	should.Equal(name, p.Name)
+	should.Equal(age, p.Age)
+}
+
 func TestTagSetOnlyOnce(t *testing.T) {
-	userDefinedTagName = "a"
+	a := "a"
+	userDefinedTagName = &a
 	SetTagName("foo")
-	require.Equal(t, "a", userDefinedTagName)
-	userDefinedTagName = ""
+	require.Equal(t, "a", *userDefinedTagName)
+	userDefinedTagName = nil
 	SetTagName("foo")
-	require.Equal(t, "foo", userDefinedTagName)
+	require.Equal(t, "foo", *userDefinedTagName)
 	// restore default tag
-	userDefinedTagName = DefaultTagName
+	userDefinedTagName = nil
 }
 
 type fakeRows struct {
@@ -1044,7 +1066,8 @@ func TestScanMock(t *testing.T) {
 		Age  int    `ddb:"age"`
 	}
 	var boys []curdBoy
-	userDefinedTagName = "ddb"
+	defaultTag := DefaultTagName
+	userDefinedTagName = &defaultTag
 	err := Scan(scannn, &boys)
 	should.NoError(err)
 	should.Equal("deen", boys[0].Name)
@@ -1061,7 +1084,7 @@ func TestScanEmpty(t *testing.T) {
 		Age  int    `ddb:"age"`
 	}
 	var boys []curdBoy
-	userDefinedTagName = "ddb"
+	*userDefinedTagName = "ddb"
 	err := Scan(scannn, &boys)
 	should.NoError(err)
 	should.Equal(0, len(boys))
