@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -987,7 +988,9 @@ type fakeRows struct {
 	idx     int
 }
 
+var gCtx context.Context = context.Background()
 var errCloseForTest = errors.New("just for test")
+var errCancelForTest = errors.New("context canceled")
 
 func (r *fakeRows) Close() error {
 	return errCloseForTest
@@ -1016,6 +1019,14 @@ func (r *fakeRows) Scan(dt ...interface{}) (err error) {
 	for i := 0; i < lendt; i++ {
 		data := r.dataset[r.idx][i]
 		reflect.ValueOf(dt[i]).Elem().Set(reflect.ValueOf(data))
+	}
+	return nil
+}
+
+func (r *fakeRows) Err() error {
+	err := gCtx.Err()
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -1074,6 +1085,31 @@ func TestScanMock(t *testing.T) {
 	should.Equal("caibirdme", boys[1].Name)
 	should.Equal(23, boys[0].Age)
 	should.Equal(24, boys[1].Age)
+}
+
+func TestScanCtxErr(t *testing.T) {
+	should := require.New(t)
+	scannn := &fakeRows{
+		columns: []string{"name", "age"},
+		dataset: [][]interface{}{
+			{"deen", 23},
+			{"caibirdme", 24},
+		},
+	}
+	type curdBoy struct {
+		Name string `ddb:"name"`
+		Age  int    `ddb:"age"`
+	}
+	var boys []curdBoy
+	defaultTag := DefaultTagName
+	userDefinedTagName = &defaultTag
+
+	var cancle context.CancelFunc
+	gCtx, cancle = context.WithCancel(gCtx)
+	cancle()
+	err := Scan(scannn, &boys)
+	should.Equal(errCancelForTest.Error(), err.Error())
+	gCtx = context.Background()
 }
 
 func TestScanEmpty(t *testing.T) {
