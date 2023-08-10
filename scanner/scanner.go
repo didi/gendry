@@ -32,6 +32,8 @@ type Rows interface {
 	Next() bool
 
 	Scan(dest ...interface{}) error
+
+	Err() error
 }
 
 const (
@@ -328,6 +330,10 @@ func resolveDataFromRows(rows Rows) ([]map[string]interface{}, error) {
 			mp[name] = *(values[idx].(*interface{}))
 		}
 		result = append(result, mp)
+	}
+	err = rows.Err()
+	if nil != err {
+		return nil, err
 	}
 	return result, nil
 }
