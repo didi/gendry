@@ -24,14 +24,14 @@ func boolSetting(source, param string, ok bool) string {
 func timeSetting(source, param string, t time.Duration) string {
 	//make sure 1ms<=t<24h
 	if t < time.Millisecond || t >= 24*time.Hour {
-		return ""
+		return source
 	}
 	return fmt.Sprintf(cDSNFormat, source, param, t)
 }
 
 func stringSetting(source, param, value string) string {
 	if "" == value {
-		return ""
+		return source
 	}
 	return fmt.Sprintf(cDSNFormat, source, param, value)
 }

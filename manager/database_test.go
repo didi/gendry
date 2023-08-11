@@ -48,14 +48,16 @@ func TestConcatDSN_Time(t *testing.T) {
 func TestConcatDSN_Time_overflow(t *testing.T) {
 	var setting []Setting
 	ass := assert.New(t)
-	setting = append(setting, SetReadTimeout(time.Microsecond), SetTimeout(24*time.Hour))
-	ass.Equal("", concatDSN(setting), "duration <1ms or >=24h should be invalid")
+	setting = append(setting, SetWriteTimeout(time.Minute), SetReadTimeout(time.Microsecond), SetTimeout(24*time.Hour))
+	ass.Equal("writeTimeout=1m0s", concatDSN(setting), "duration <1ms or >=24h should be invalid")
 }
 
 func TestConcatDSN_String_null(t *testing.T) {
 	var setting []Setting
 	ass := assert.New(t)
 	setting = append(setting, SetCollation(""), SetLoc(""), SetStrict(false), SetInterpolateParams(true))
+	ass.Equal("strict=false&interpolateParams=true", concatDSN(setting), `null value should be ignored`)
+	setting = append(setting, SetCollation(""), SetStrict(false), SetInterpolateParams(true), SetLoc(""))
 	ass.Equal("strict=false&interpolateParams=true", concatDSN(setting), `null value should be ignored`)
 }
 
