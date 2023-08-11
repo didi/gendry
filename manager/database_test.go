@@ -55,9 +55,9 @@ func TestConcatDSN_Time_overflow(t *testing.T) {
 func TestConcatDSN_String_null(t *testing.T) {
 	var setting []Setting
 	ass := assert.New(t)
-	setting = append(setting, SetCollation(""), SetLoc(""), SetStrict(false), SetInterpolateParams(true))
+	setting = append([]Setting{}, SetCollation(""), SetLoc(""), SetStrict(false), SetInterpolateParams(true))
 	ass.Equal("strict=false&interpolateParams=true", concatDSN(setting), `null value should be ignored`)
-	setting = append(setting, SetCollation(""), SetStrict(false), SetInterpolateParams(true), SetLoc(""))
+	setting = append([]Setting{}, SetCollation(""), SetStrict(false), SetInterpolateParams(true), SetLoc(""))
 	ass.Equal("strict=false&interpolateParams=true", concatDSN(setting), `null value should be ignored`)
 }
 
