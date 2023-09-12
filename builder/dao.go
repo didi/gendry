@@ -405,6 +405,9 @@ func buildInsertOnDuplicate(table string, data []map[string]interface{}, update 
 
 func resolveUpdate(update map[string]interface{}) (sets string, vals []interface{}) {
 	keys := make([]string, 0, len(update))
+	for key := range update {
+		keys = append(keys, key)
+	}
 	defaultSortAlgorithm(keys)
 	var sb strings.Builder
 	for _, k := range keys {
@@ -417,7 +420,7 @@ func resolveUpdate(update map[string]interface{}) (sets string, vals []interface
 			continue
 		}
 		vals = append(vals, v)
-		sets += fmt.Sprintf("%s=?,", quoteField(k))
+		sb.WriteString(fmt.Sprintf("%s=?,", quoteField(k)))
 	}
 	sets = strings.TrimRight(sb.String(), ",")
 	return sets, vals

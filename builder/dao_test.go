@@ -118,7 +118,7 @@ func TestResolveUpdate(t *testing.T) {
 		outVals []interface{}
 	}{
 		{
-			map[string]interface{}{
+			in: map[string]interface{}{
 				"foo": "bar",
 				"bar": 1,
 			},
@@ -126,13 +126,13 @@ func TestResolveUpdate(t *testing.T) {
 			outVals: []interface{}{1, "bar"},
 		},
 		{
-			map[string]interface{}{
+			in: map[string]interface{}{
 				"qq":    "ttt",
 				"some":  123,
 				"other": 456,
 			},
 			outStr:  "other=?,qq=?,some=?",
-			[]interface{}{456, "ttt", 123},
+			outVals: []interface{}{456, "ttt", 123},
 		},
 		{
 			in: map[string]interface{}{ // mysql5.7
