@@ -135,7 +135,7 @@ func TestResolveUpdate(t *testing.T) {
 			[]interface{}{456, "ttt", 123},
 		},
 		{
-			in: map[string]any{ // mysql5.7
+			in: map[string]interface{}{ // mysql5.7
 				"id":   1,
 				"name": Raw(""),
 				"age":  Raw("VALUES(age)"),
@@ -144,7 +144,7 @@ func TestResolveUpdate(t *testing.T) {
 			outVals: []interface{}{1},
 		},
 		{
-			in: map[string]any{ // mysql8.0
+			in: map[string]interface{}{ // mysql8.0
 				"id":   1,
 				"name": Raw("new.name"),
 				"age":  Raw("new.age"),
