@@ -35,6 +35,8 @@ var (
 	}
 )
 
+type Raw string
+
 type whereMapSet struct {
 	set map[string]map[string]interface{}
 }

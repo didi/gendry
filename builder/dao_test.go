@@ -111,10 +111,10 @@ func TestAssembleExpression(t *testing.T) {
 	}
 }
 
-func TestResolveKV(t *testing.T) {
+func TestResolveUpdate(t *testing.T) {
 	var data = []struct {
 		in      map[string]interface{}
-		outStr  []string
+		outStr  string
 		outVals []interface{}
 	}{
 		{
@@ -122,8 +122,8 @@ func TestResolveKV(t *testing.T) {
 				"foo": "bar",
 				"bar": 1,
 			},
-			[]string{"bar", "foo"},
-			[]interface{}{1, "bar"},
+			outStr:  "bar=?,foo=?",
+			outVals: []interface{}{1, "bar"},
 		},
 		{
 			map[string]interface{}{
@@ -131,13 +131,31 @@ func TestResolveKV(t *testing.T) {
 				"some":  123,
 				"other": 456,
 			},
-			[]string{"other", "qq", "some"},
+			outStr:  "other=?,qq=?,some=?",
 			[]interface{}{456, "ttt", 123},
+		},
+		{
+			in: map[string]any{ // mysql5.7
+				"id":   1,
+				"name": Raw(""),
+				"age":  Raw("VALUES(age)"),
+			},
+			outStr:  "age=VALUES(age),id=?,name=VALUES(name)",
+			outVals: []interface{}{1},
+		},
+		{
+			in: map[string]any{ // mysql8.0
+				"id":   1,
+				"name": Raw("new.name"),
+				"age":  Raw("new.age"),
+			},
+			outStr:  "age=new.age,id=?,name=new.name",
+			outVals: []interface{}{1},
 		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
-		keys, vals := resolveKV(tc.in)
+		keys, vals := resolveUpdate(tc.in)
 		ass.Equal(tc.outStr, keys)
 		ass.Equal(tc.outVals, vals)
 	}
