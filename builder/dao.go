@@ -413,9 +413,6 @@ func resolveUpdate(update map[string]interface{}) (sets string, vals []interface
 	for _, k := range keys {
 		v := update[k]
 		if _, ok := v.(Raw); ok {
-			if v == Raw("") {
-				v = fmt.Sprintf("VALUES(%s)", k)
-			}
 			sb.WriteString(fmt.Sprintf("%s=%s,", k, v))
 			continue
 		}

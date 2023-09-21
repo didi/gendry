@@ -137,7 +137,7 @@ func TestResolveUpdate(t *testing.T) {
 		{
 			in: map[string]interface{}{ // mysql5.7
 				"id":   1,
-				"name": Raw(""),
+				"name": Raw("VALUES(name)"),
 				"age":  Raw("VALUES(age)"),
 			},
 			outStr:  "age=VALUES(age),id=?,name=VALUES(name)",
