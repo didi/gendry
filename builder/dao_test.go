@@ -21,11 +21,18 @@ func TestEq(t *testing.T) {
 			[]string{"baz=?", "foo=?", "qq=?"},
 			[]interface{}{1, "bar", "ttx"},
 		},
+		{
+			map[string]interface{}{
+				"gmt_create": Raw("gmt_modified"),
+				"status":     1,
+			},
+			[]string{"gmt_create=gmt_modified", "status=?"},
+			[]interface{}{1},
+		},
 	}
 	ass := assert.New(t)
 	for _, testCase := range testData {
 		cond, vals := Eq(testCase.in).Build()
-		ass.Equal(len(cond), len(vals))
 		ass.Equal(testCase.outCon, cond)
 		ass.Equal(testCase.outVal, vals)
 	}
@@ -299,11 +306,12 @@ func TestBuildInsertOnDuplicate(t *testing.T) {
 				},
 			},
 			update: map[string]interface{}{
+				"a": Raw("VALUES(a)"),
 				"b": 7,
 				"c": 8,
 			},
 			outErr:  nil,
-			outStr:  "INSERT INTO tb (a,b,c) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE b=?,c=?",
+			outStr:  "INSERT INTO tb (a,b,c) VALUES (?,?,?),(?,?,?) ON DUPLICATE KEY UPDATE a=VALUES(a),b=?,c=?",
 			outVals: []interface{}{1, 2, 3, 4, 5, 6, 7, 8},
 		},
 	}
@@ -334,11 +342,12 @@ func TestBuildUpdate(t *testing.T) {
 				}),
 			},
 			data: map[string]interface{}{
-				"name": "deen",
-				"age":  23,
+				"name":  "deen",
+				"age":   23,
+				"count": Raw("count+1"),
 			},
 			outErr:  nil,
-			outStr:  "UPDATE tb SET age=?,name=? WHERE (foo=? AND qq=?)",
+			outStr:  "UPDATE tb SET age=?,count=count+1,name=? WHERE (foo=? AND qq=?)",
 			outVals: []interface{}{23, "deen", "bar", 1},
 		},
 	}
@@ -363,12 +372,13 @@ func TestBuildDelete(t *testing.T) {
 			table: "tb",
 			where: []Comparable{
 				Eq(map[string]interface{}{
-					"foo": 1,
-					"bar": 2,
-					"baz": "tt",
+					"foo":        1,
+					"bar":        2,
+					"baz":        "tt",
+					"gmt_create": Raw("gmt_modified"),
 				}),
 			},
-			outStr:  "DELETE FROM tb WHERE (bar=? AND baz=? AND foo=?)",
+			outStr:  "DELETE FROM tb WHERE (bar=? AND baz=? AND foo=? AND gmt_create=gmt_modified)",
 			outVals: []interface{}{2, "tt", 1},
 			outErr:  nil,
 		},
@@ -402,6 +412,7 @@ func TestBuildSelect(t *testing.T) {
 				Eq(map[string]interface{}{
 					"foo": 1,
 					"bar": 2,
+					"tm":  Raw("NOW()"),
 				}),
 				In(map[string][]interface{}{
 					"qq": {4, 5, 6},
@@ -433,7 +444,7 @@ func TestBuildSelect(t *testing.T) {
 			},
 			lockMode: "exclusive",
 			outErr:   nil,
-			outStr:   "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND qq IN (?,?,?) AND ((aa=? AND bb=?) OR (cc=? AND dd=?))) ORDER BY foo DESC,baz ASC LIMIT ?,? FOR UPDATE",
+			outStr:   "SELECT foo,bar FROM tb WHERE (bar=? AND foo=? AND tm=NOW() AND qq IN (?,?,?) AND ((aa=? AND bb=?) OR (cc=? AND dd=?))) ORDER BY foo DESC,baz ASC LIMIT ?,? FOR UPDATE",
 			outVals:  []interface{}{2, 1, 4, 5, 6, 3, 4, 7, 8, 10, 20},
 		},
 	}
