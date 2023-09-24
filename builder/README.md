@@ -26,6 +26,7 @@ func main() {
         "country": "China",
         "role": "driver",
         "age >": 45,
+        "gmt_create <": builder.Raw("gmt_modified"),
         "_or": []map[string]interface{}{
             {
                 "x1":    11,
@@ -45,7 +46,7 @@ func main() {
     }
     cond,vals,err := qb.BuildSelect("tableName", where, []string{"name", "count(price) as total", "age"})
     
-    //cond: SELECT name,count(price) as total,age FROM tableName WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND country=? AND role=? AND age>?) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age DESC
+    //cond: SELECT name,count(price) as total,age FROM tableName WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND country=? AND gmt_create < gmt_modified AND role=? AND age>?) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age DESC
     //vals: []interface{}{11, 45, "234", "tx2", "China", "driver", 45, 1000, 50000}
 
 	if nil != err {
@@ -287,6 +288,16 @@ update := map[string]interface{}{
 }
 cond, vals, err := qb.BuildInsertOnDuplicate(table, data, update)
 db.Exec(cond, vals...)
+
+
+// update support builder.Raw to update when duplicate with value in insert data
+update = map[string]interface{}{
+    "code": builder.Raw("VALUES(code)"), // mysql 8.x  builder.Raw("new.code")
+    "name": builder.Raw("VALUES(name)"), // mysql 8.x  builder.Raw("new.name")
+}
+cond, values, err := builder.BuildInsertOnDuplicate(table, data, update)
+// INSERT INTO country (id, code, name) VALUES (?,?,?),(?,?,?),(?,?,?) 
+// ON DUPLICATE KEY UPDATE code=VALUES(code),name=VALUES(name)
 ```
 
 #### `NamedQuery`

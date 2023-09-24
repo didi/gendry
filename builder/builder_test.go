@@ -608,7 +608,7 @@ func Test_BuildSelect(t *testing.T) {
 	}
 }
 
-func Test_BuildSelectMutliOr(t *testing.T) {
+func Test_BuildSelectMultiOr(t *testing.T) {
 	type inStruct struct {
 		table  string
 		where  map[string]interface{}

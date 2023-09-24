@@ -83,6 +83,20 @@ cond, values, err := builder.BuildSelect(table, where, selectFields)
 //values = []interface{}{11, 45, "234", "tx2", 5, "beijing", "shanghai", 35}
 
 rows, err := db.Query(cond, values...)
+
+
+// support builder.Raw in where & update
+where := map[string]interface{}{"gmt_create <": builder.Raw("gmt_modified")}
+cond, values, err := builder.BuildSelect(table, where, selectFields)
+// SELECT * FROM x WHERE gmt_create < gmt_modified
+
+update = map[string]interface{}{
+    "code": builder.Raw("VALUES(code)"), // mysql 8.x  builder.Raw("new.code")
+    "name": builder.Raw("VALUES(name)"), // mysql 8.x  builder.Raw("new.name")
+}
+cond, values, err := builder.BuildInsertOnDuplicate(table, data, update)
+// INSERT INTO country (id, code, name) VALUES (?,?,?),(?,?,?),(?,?,?) 
+// ON DUPLICATE KEY UPDATE code=VALUES(code),name=VALUES(name)
 ```
 
 In the `where` param, `in` operator is automatically added by value type(reflect.Slice).
