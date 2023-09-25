@@ -447,6 +447,10 @@ func buildDelete(table string, conditions ...Comparable) (string, []interface{},
 	format := "DELETE FROM %s WHERE %s"
 
 	cond := fmt.Sprintf(format, quoteField(table), whereString)
+	if limit > 0 {
+		cond += " LIMIT ?"
+		vals = append(vals, int(limit))
+	}
 	return cond, vals, nil
 }
 

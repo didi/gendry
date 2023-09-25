@@ -21,7 +21,7 @@ var (
 	errHavingUnsupportedOperator = errors.New(`[builder] "_having" contains unsupported operator`)
 	errLockModeValueType         = errors.New(`[builder] the value of "_lockMode" must be of string type`)
 	errNotAllowedLockMode        = errors.New(`[builder] the value of "_lockMode" is not allowed`)
-	errUpdateLimitType           = errors.New(`[builder] the value of "_limit" in update query must be one of int,uint,int64,uint64`)
+	errLimitType                 = errors.New(`[builder] the value of "_limit" in update query must be one of int,uint,int64,uint64`)
 
 	errWhereInterfaceSliceType = `[builder] the value of "xxx %s" must be of []interface{} type`
 	errEmptySliceCondition     = `[builder] the value of "%s" must contain at least one element`
@@ -170,8 +170,7 @@ func resolveHaving(having interface{}) (map[string]interface{}, error) {
 	return copiedMap, nil
 }
 
-// BuildUpdate work as its name says
-func BuildUpdate(table string, where map[string]interface{}, update map[string]interface{}) (string, []interface{}, error) {
+func getLimit(where map[string]interface{}) (uint, error) {
 	var limit uint
 	if v, ok := where["_limit"]; ok {
 		switch val := v.(type) {
@@ -184,8 +183,17 @@ func BuildUpdate(table string, where map[string]interface{}, update map[string]i
 		case uint64:
 			limit = uint(val)
 		default:
-			return "", nil, errUpdateLimitType
+			return 0, errLimitType
 		}
+	}
+	return limit, nil
+}
+
+// BuildUpdate work as its name says
+func BuildUpdate(table string, where map[string]interface{}, update map[string]interface{}) (string, []interface{}, error) {
+	limit, err := getLimit(where)
+	if err != nil {
+		return "", nil, err
 	}
 	conditions, err := getWhereConditions(where, defaultIgnoreKeys)
 	if nil != err {
@@ -196,11 +204,15 @@ func BuildUpdate(table string, where map[string]interface{}, update map[string]i
 
 // BuildDelete work as its name says
 func BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error) {
+	limit, err := getLimit(where)
+	if err != nil {
+		return "", nil, err
+	}
 	conditions, err := getWhereConditions(where, defaultIgnoreKeys)
 	if nil != err {
 		return "", nil, err
 	}
-	return buildDelete(table, conditions...)
+	return buildDelete(table, limit, conditions...)
 }
 
 // BuildInsert work as its name says
