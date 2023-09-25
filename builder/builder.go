@@ -21,7 +21,7 @@ var (
 	errHavingUnsupportedOperator = errors.New(`[builder] "_having" contains unsupported operator`)
 	errLockModeValueType         = errors.New(`[builder] the value of "_lockMode" must be of string type`)
 	errNotAllowedLockMode        = errors.New(`[builder] the value of "_lockMode" is not allowed`)
-	errLimitType                 = errors.New(`[builder] the value of "_limit" in update query must be one of int,uint,int64,uint64`)
+	errLimitType                 = errors.New(`[builder] the value of "_limit" must be one of int,uint,int64,uint64`)
 
 	errWhereInterfaceSliceType = `[builder] the value of "xxx %s" must be of []interface{} type`
 	errEmptySliceCondition     = `[builder] the value of "%s" must contain at least one element`
