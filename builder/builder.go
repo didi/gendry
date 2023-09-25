@@ -203,7 +203,7 @@ func BuildUpdate(table string, where map[string]interface{}, update map[string]i
 }
 
 // BuildDelete work as its name says
-func BuildDelete(table string, where map[string]interface{}) (string, []interface{}, error) {
+func BuildDelete(table string, limit uint, where map[string]interface{}) (string, []interface{}, error) {
 	limit, err := getLimit(where)
 	if err != nil {
 		return "", nil, err
