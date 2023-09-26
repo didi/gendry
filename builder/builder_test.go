@@ -388,11 +388,12 @@ func Test_BuildDelete(t *testing.T) {
 					"age >=":   21,
 					"sex in":   []interface{}{"male", "female"},
 					"hobby in": []interface{}{"soccer", "basketball", "tenis"},
+					"_limit":   10,
 				},
 			},
 			out: outStruct{
-				cond: "DELETE FROM tb WHERE (hobby IN (?,?,?) AND sex IN (?,?) AND age>=?)",
-				vals: []interface{}{"soccer", "basketball", "tenis", "male", "female", 21},
+				cond: "DELETE FROM tb WHERE (hobby IN (?,?,?) AND sex IN (?,?) AND age>=?) LIMIT ?",
+				vals: []interface{}{"soccer", "basketball", "tenis", "male", "female", 21, 10},
 				err:  nil,
 			},
 		},
@@ -486,7 +487,7 @@ func Test_BuildUpdate(t *testing.T) {
 			out: outStruct{
 				cond: "",
 				vals: nil,
-				err:  errUpdateLimitType,
+				err:  errLimitType,
 			},
 		},
 	}

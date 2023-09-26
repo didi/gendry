@@ -439,7 +439,7 @@ func buildUpdate(table string, update map[string]interface{}, limit uint, condit
 	return cond, vals, nil
 }
 
-func buildDelete(table string, conditions ...Comparable) (string, []interface{}, error) {
+func buildDelete(table string, limit uint, conditions ...Comparable) (string, []interface{}, error) {
 	whereString, vals := whereConnector("AND", conditions...)
 	if "" == whereString {
 		return fmt.Sprintf("DELETE FROM %s", table), nil, nil
@@ -447,6 +447,10 @@ func buildDelete(table string, conditions ...Comparable) (string, []interface{},
 	format := "DELETE FROM %s WHERE %s"
 
 	cond := fmt.Sprintf(format, quoteField(table), whereString)
+	if limit > 0 {
+		cond += " LIMIT ?"
+		vals = append(vals, int(limit))
+	}
 	return cond, vals, nil
 }
 
