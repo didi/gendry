@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"math"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
@@ -1213,15 +1214,28 @@ func TestUnmarshalByte(t *testing.T) {
 
 func TestScanClose(t *testing.T) {
 	rows := &fakeRows{
-		columns: []string{"foo", "bar"},
+		columns: []string{"foo", "bar", "foo1", "bar1"},
 		dataset: [][]interface{}{
-			[]interface{}{1, 2},
+			[]interface{}{1, 2, 3, 4},
 		},
 	}
-	var testObj = struct {
+
+	type S1 struct {
+		Foo1 int `ddb:"foo1"`
+	}
+
+	type S2 struct {
+		Bar1 int `ddb:"bar1"`
+	}
+
+	type SS struct {
+		S1
+		*S2
 		Foo int `ddb:"foo"`
 		Bar int `ddb:"bar"`
-	}{}
+	}
+
+	var testObj = SS{}
 	should := require.New(t)
 	err := ScanClose(rows, &testObj)
 	e, ok := err.(CloseErr)
@@ -1229,6 +1243,8 @@ func TestScanClose(t *testing.T) {
 	should.Equal(errCloseForTest.Error(), e.Error())
 	should.Equal(1, testObj.Foo)
 	should.Equal(2, testObj.Bar)
+	should.Equal(3, testObj.Foo1)
+	should.Equal(4, testObj.Bar1)
 }
 
 func TestErrClose(t *testing.T) {
