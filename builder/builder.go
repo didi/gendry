@@ -22,6 +22,7 @@ var (
 	errLockModeValueType         = errors.New(`[builder] the value of "_lockMode" must be of string type`)
 	errNotAllowedLockMode        = errors.New(`[builder] the value of "_lockMode" is not allowed`)
 	errLimitType                 = errors.New(`[builder] the value of "_limit" must be one of int,uint,int64,uint64`)
+	errCustomValueType           = errors.New(`[builder] the value of "_custom_" must impl Comparable`)
 
 	errWhereInterfaceSliceType = `[builder] the value of "xxx %s" must be of []interface{} type`
 	errEmptySliceCondition     = `[builder] the value of "%s" must contain at least one element`
@@ -252,7 +253,15 @@ func getWhereConditions(where map[string]interface{}, ignoreKeys map[string]stru
 	var comparables []Comparable
 	var field, operator string
 	var err error
-	for key, val := range where {
+	// to keep the result in certain order
+	keys := make([]string, 0, len(where))
+	for key := range where {
+		keys = append(keys, key)
+	}
+	defaultSortAlgorithm(keys)
+
+	for _, key := range keys {
+		val := where[key]
 		if _, ok := ignoreKeys[key]; ok {
 			continue
 		}
@@ -276,6 +285,14 @@ func getWhereConditions(where map[string]interface{}, ignoreKeys map[string]stru
 				orWhereComparable = append(orWhereComparable, NestWhere(orNestWhere))
 			}
 			comparables = append(comparables, OrWhere(orWhereComparable))
+			continue
+		}
+		if strings.HasPrefix(key, "_custom_") {
+			v, ok := val.(Comparable)
+			if !ok {
+				return nil, errCustomValueType
+			}
+			comparables = append(comparables, v)
 			continue
 		}
 		field, operator, err = splitKey(key, val)
