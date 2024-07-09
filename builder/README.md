@@ -14,7 +14,7 @@ package main
 import (
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
-    qb "github.com/didi/gendry/builder"
+    "github.com/didi/gendry/builder"
 )
 
 func main() {
@@ -22,7 +22,9 @@ func main() {
     if nil != err {
         panic(err)
     }
-    mp := map[string]interface{}{
+    where := map[string]interface{}{
+        "_custom_0": builder.Custom("name=?", "name0"),
+        "_custom_1": builder.JsonContains("my_json->'$.list'", 1),
         "country": "China",
         "role": "driver",
         "age >": 45,
@@ -44,10 +46,10 @@ func main() {
         },
     	"_orderby": "age desc",
     }
-    cond,vals,err := qb.BuildSelect("tableName", where, []string{"name", "count(price) as total", "age"})
+    cond,vals,err := builder.BuildSelect("tableName", where, []string{"name", "count(price) as total", "age"})
     
-    //cond: SELECT name,count(price) as total,age FROM tableName WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND country=? AND gmt_create < gmt_modified AND role=? AND age>?) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age DESC
-    //vals: []interface{}{11, 45, "234", "tx2", "China", "driver", 45, 1000, 50000}
+    //cond: SELECT name,count(price) as total,age FROM tableName WHERE (name=? AND (? MEMBER OF(my_json->'$.list')) AND ((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND country=? AND role=? AND age>? AND gmt_create<gmt_modified) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age desc
+    //vals: []interface{}{"name0", 1, 11, 45, "234", "tx2", "China", "driver", 45, 1000, 50000}
 
 	if nil != err {
 		panic(err)
@@ -111,10 +113,12 @@ others supported:
 * _having
 * _limit
 * _lockMode
+* _custom_xxx
 
 ``` go
 where := map[string]interface{}{
     "age >": 100,
+    "_custom_1":    builder.JsonContains("my_json->'$.list'", 1),
     "_or": []map[string]interface{}{
         {
             "x1":    11,
@@ -140,6 +144,8 @@ Note:
 * value of _lockMode only supports `share` and `exclusive` temporarily:
     * `share` representative `SELECT ... LOCK IN SHARE MODE`. Unfortunately, the current version does not support `SELECT ... FOR SHARE`, It'll be supported in the future.
     * `exclusive` representative `SELECT ... FOR UPDATE`
+* if key starts with `_custom_`, the corresponding value must be a `builder.Comparable`. We provide builtin type such as `Custom` and `JsonContains`. You can also provide your own implementation if you want
+* `JsonSet`,`JsonArrayAppend`,`JsonArrayInsert`,`JsonRemove` should be used in update map rather than where map
 
 #### Aggregate
 
@@ -199,6 +205,7 @@ where := map[string]interface{}{
 update := map[string]interface{}{
 	"role": "primaryschoolstudent",
 	"rank": 5,
+	"_custom_0": qb.JsonArrayAppend("my_json", "$", 0, "$", 1),
 }
 cond,vals,err := qb.BuildUpdate("table_name", where, update)
 
