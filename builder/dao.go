@@ -296,6 +296,17 @@ func (ow OrWhere) Build() ([]string, []interface{}) {
 	return cond, vals
 }
 
+type AndWhere []Comparable
+
+func (aw AndWhere) Build() ([]string, []interface{}) {
+	var cond []string
+	var vals []interface{}
+	andWhereString, andWhereVals := whereConnector("AND", aw...)
+	cond = append(cond, andWhereString)
+	vals = andWhereVals
+	return cond, vals
+}
+
 func build(m map[string]interface{}, op string) ([]string, []interface{}) {
 	if nil == m || 0 == len(m) {
 		return nil, nil

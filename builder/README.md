@@ -50,6 +50,47 @@ func main() {
     
     //cond: SELECT name,count(price) as total,age FROM tableName WHERE (name=? AND (? MEMBER OF(my_json->'$.list')) AND ((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND country=? AND role=? AND age>? AND gmt_create<gmt_modified) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age desc
     //vals: []interface{}{"name0", 1, 11, 45, "234", "tx2", "China", "driver", 45, 1000, 50000}
+    
+	notDelWhere := map[string]interface{}{
+		"is_del": 0,
+	}
+
+	bllWhere := map[string]interface{}{
+		"_custom_0":    builder.Custom("name=?", "name0"),
+		"_custom_1":    builder.JsonContains("my_json->'$.list'", 1),
+		"country":      "China",
+		"role":         "driver",
+		"age >":        45,
+		"gmt_create <": builder.Raw("gmt_modified"),
+		"_or": []map[string]interface{}{
+			{
+				"x1":    11,
+				"x2 >=": 45,
+			},
+			{
+				"x3":    "234",
+				"x4 <>": "tx2",
+			},
+		},
+	}
+
+	aopWhere := map[string]interface{}{
+		"_and": []map[string]interface{}{
+			notDelWhere,
+			bllWhere,
+		},
+		"_groupby": "name",
+		"_having": map[string]interface{}{
+			"total >":  1000,
+			"total <=": 50000,
+		},
+		"_orderby": "age desc",
+	}
+    
+    condAop,valsAop,err := builder.BuildSelect("tableName", where, []string{"name", "count(price) as total", "age"})
+    
+    //condAop:  SELECT name,count(price) as total,age FROM tableName WHERE (((is_del=?) AND (name=? AND (? MEMBER OF(my_json->'$.list')) AND ((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND country=? AND role=? AND age>? AND gmt_create<gmt_modified))) GROUP BY name HAVING (total>? AND total<=?) ORDER BY age desc
+    //valsAop:  [0 name0 1 11 45 234 tx2 China driver 45 1000 50000]
 
 	if nil != err {
 		panic(err)
@@ -114,6 +155,7 @@ others supported:
 * _limit
 * _lockMode
 * _custom_xxx
+* _and
 
 ``` go
 where := map[string]interface{}{
@@ -134,6 +176,15 @@ where := map[string]interface{}{
     "_having": map[string]interface{}{"foo":"bar",},
     "_limit": []uint{offset, row_count},
     "_lockMode": "share",
+}
+
+aopWhere := map[string]interface{}{
+  "_and_soft_deleted": []map[string]interface{}{
+    {
+        "is_del": 1,
+    },
+    where,
+  }
 }
 ```
 Note:
