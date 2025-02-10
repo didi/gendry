@@ -380,24 +380,42 @@ func convert(mapValue interface{}, valuei reflect.Value, wrapErr convertErrWrapp
 
 	//according to go-mysql-driver/mysql, driver.Value type can only be:
 	//int64 or []byte(> maxInt64)
+	//uint64
 	//float32/float64
 	//[]byte
 	//time.Time if parseTime=true or DATE type will be converted into []byte
 	switch mvt.Kind() {
 	case reflect.Int64:
+		v := mapValue.(int64)
 		if isIntSeriesType(vit.Kind()) {
-			valuei.SetInt(mapValue.(int64))
+			valuei.SetInt(v)
 		} else if isUintSeriesType(vit.Kind()) {
-			valuei.SetUint(uint64(mapValue.(int64)))
+			valuei.SetUint(uint64(v))
 		} else if vit.Kind() == reflect.Bool {
-			v := mapValue.(int64)
 			if v > 0 {
 				valuei.SetBool(true)
 			} else {
 				valuei.SetBool(false)
 			}
 		} else if vit.Kind() == reflect.String {
-			valuei.SetString(strconv.FormatInt(mapValue.(int64), 10))
+			valuei.SetString(strconv.FormatInt(v, 10))
+		} else {
+			return wrapErr(mvt, vit)
+		}
+	case reflect.Uint64:
+		v := mapValue.(uint64)
+		if isIntSeriesType(vit.Kind()) {
+			valuei.SetInt(int64(v))
+		} else if isUintSeriesType(vit.Kind()) {
+			valuei.SetUint(v)
+		} else if vit.Kind() == reflect.Bool {
+			if v > 0 {
+				valuei.SetBool(true)
+			} else {
+				valuei.SetBool(false)
+			}
+		} else if vit.Kind() == reflect.String {
+			valuei.SetString(strconv.FormatUint(v, 10))
 		} else {
 			return wrapErr(mvt, vit)
 		}
