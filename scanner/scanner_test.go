@@ -17,21 +17,24 @@ import (
 
 func TestBindOne(t *testing.T) {
 	type Person struct {
-		Name string `ddb:"name"`
-		Age  int    `ddb:"ag"`
+		Name  string `ddb:"name"`
+		Age   int    `ddb:"ag"`
+		Score int8   `ddb:"score"`
 	}
 	var p Person
 	name := "deen"
 	age := 23
 	var mp = map[string]interface{}{
-		"name": name,
-		"ag":   age,
+		"name":  name,
+		"ag":    age,
+		"score": uint64(100),
 	}
 	err := bind(mp, &p)
 	should := require.New(t)
 	should.NoError(err)
 	should.Equal(name, p.Name)
 	should.Equal(age, p.Age)
+	should.Equal(int8(100), p.Score)
 }
 
 func TestScanner_Time(t *testing.T) {
