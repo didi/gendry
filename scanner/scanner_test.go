@@ -24,7 +24,7 @@ func TestBindOne(t *testing.T) {
 	var p Person
 	name := "deen"
 	age := 23
-	var mp = map[string]any{
+	var mp = map[string]interface{}{
 		"name":  name,
 		"ag":    age,
 		"score": uint64(100),
