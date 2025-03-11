@@ -384,6 +384,20 @@ func TestBuildDelete(t *testing.T) {
 			outVals: []interface{}{2, "tt", 1, 5},
 			outErr:  nil,
 		},
+		{
+			table:   "tb",
+			limit:   5,
+			outStr:  "DELETE FROM tb LIMIT ?",
+			outVals: []interface{}{5},
+			outErr:  nil,
+		},
+		{
+			table:   "tb",
+			limit:   0,
+			outStr:  "DELETE FROM tb",
+			outVals: nil,
+			outErr:  nil,
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
