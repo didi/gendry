@@ -295,6 +295,28 @@ func getWhereConditions(where map[string]interface{}, ignoreKeys map[string]stru
 			comparables = append(comparables, v)
 			continue
 		}
+		if strings.HasPrefix(key, "_and") {
+			var (
+				andWheres          []map[string]interface{}
+				andWhereComparable []Comparable
+				ok                 bool
+			)
+			if andWheres, ok = val.([]map[string]interface{}); !ok {
+				return nil, errOrValueType
+			}
+			for _, andWhere := range andWheres {
+				if andWhere == nil {
+					continue
+				}
+				andNestWhere, err := getWhereConditions(andWhere, ignoreKeys)
+				if nil != err {
+					return nil, err
+				}
+				andWhereComparable = append(andWhereComparable, NestWhere(andNestWhere))
+			}
+			comparables = append(comparables, AndWhere(andWhereComparable))
+			continue
+		}
 		field, operator, err = splitKey(key, val)
 		if nil != err {
 			return nil, err

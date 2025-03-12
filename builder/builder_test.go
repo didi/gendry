@@ -668,6 +668,65 @@ func Test_BuildSelectMultiOr(t *testing.T) {
 	}
 }
 
+func Test_BuildSelectMultiAnd(t *testing.T) {
+	type inStruct struct {
+		table  string
+		where  map[string]interface{}
+		fields []string
+	}
+	type outStruct struct {
+		cond string
+		vals []interface{}
+		err  error
+	}
+	var data = []struct {
+		in  inStruct
+		out outStruct
+	}{
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"col1": 1,
+					"_and": []map[string]interface{}{
+						{
+							"aop1_1": 2,
+							"aop1_2": 3,
+						},
+						{
+							"bll1": 4,
+							"bll2": 5,
+						},
+					},
+					"_and2": []map[string]interface{}{
+						{
+							"aop2_1": 22,
+							"aop2_2": 33,
+						},
+						{
+							"bll3": 44,
+							"bll4": 55,
+						},
+					},
+				},
+				fields: []string{"id", "name", "age"},
+			},
+			out: outStruct{
+				cond: "SELECT id,name,age FROM tb WHERE (((aop1_1=? AND aop1_2=?) AND (bll1=? AND bll2=?)) AND ((aop2_1=? AND aop2_2=?) AND (bll3=? AND bll4=?)) AND col1=?)",
+				vals: []interface{}{2, 3, 4, 5, 22, 33, 44, 55, 1},
+				err:  nil,
+			},
+		},
+	}
+	ass := assert.New(t)
+	for _, tc := range data {
+		cond, vals, err := BuildSelect(tc.in.table, tc.in.where, tc.in.fields)
+		ass.Equal(tc.out.err, err)
+		ass.Equal(tc.out.cond, cond)
+		ass.Equal(tc.out.vals, vals)
+	}
+}
+
 func BenchmarkBuildSelect_Sequelization(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _, err := BuildSelect("tb", map[string]interface{}{
