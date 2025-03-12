@@ -454,8 +454,7 @@ func splitKey(key string, val interface{}) (field string, operator string, err e
 	}
 	idx := strings.IndexByte(key, ' ')
 	if idx == -1 {
-		field = key
-		operator = "="
+		field, operator = splitKeyNoSpace(key)
 		if reflect.ValueOf(val).Kind() == reflect.Slice {
 			operator = "in"
 		}
@@ -463,6 +462,23 @@ func splitKey(key string, val interface{}) (field string, operator string, err e
 		field = key[:idx]
 		operator = strings.Trim(key[idx+1:], " ")
 		operator = removeInnerSpace(operator)
+	}
+	return
+}
+
+var opCanLinkedWithField = []string{opNe1, opNe2, opGte, opLte, opEq, opGt, opLt} // 2 chars op first
+
+func splitKeyNoSpace(key string) (field string, operator string) {
+	field = key
+	operator = "="
+	for _, op := range opCanLinkedWithField {
+		idx := strings.Index(key, op)
+		if idx != -1 {
+			field = key[:idx]
+			operator = key[idx:]
+			break
+		}
+		continue
 	}
 	return
 }

@@ -599,6 +599,35 @@ func Test_BuildSelect(t *testing.T) {
 				err:  nil,
 			},
 		},
+		{
+			in: inStruct{
+				table: "tb",
+				where: map[string]interface{}{
+					"foo":      "bar",
+					"foo1>=":   "bar",
+					"foo2<=":   "bar",
+					"foo3<>":   "bar",
+					"foo4!=":   "bar",
+					"foo5>":    "bar",
+					"foo6<":    "bar",
+					"foo7=":    "bar",
+					"foo11 >=": "bar",
+					"foo12 <=": "bar",
+					"foo13 <>": "bar",
+					"foo14 !=": "bar",
+					"foo15 >":  "bar",
+					"foo16 <":  "bar",
+					"foo17 =":  "bar",
+					"_orderby": "  ",
+				},
+				fields: nil,
+			},
+			out: outStruct{
+				cond: "SELECT * FROM tb WHERE (foo=? AND foo17=? AND foo7=? AND foo14!=? AND foo4!=? AND foo13!=? AND foo3!=? AND foo15>? AND foo5>? AND foo1>=? AND foo11>=? AND foo16<? AND foo6<? AND foo12<=? AND foo2<=?)",
+				vals: []interface{}{"bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar", "bar"},
+				err:  nil,
+			},
+		},
 	}
 	ass := assert.New(t)
 	for _, tc := range data {
