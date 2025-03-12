@@ -452,12 +452,14 @@ func buildUpdate(table string, update map[string]interface{}, limit uint, condit
 
 func buildDelete(table string, limit uint, conditions ...Comparable) (string, []interface{}, error) {
 	whereString, vals := whereConnector("AND", conditions...)
-	if "" == whereString {
-		return fmt.Sprintf("DELETE FROM %s", table), nil, nil
+	format := "DELETE FROM %s"
+	args := make([]interface{}, 0, 2)
+	args = append(args, quoteField(table))
+	if len(whereString) > 0 {
+		format += " WHERE %s"
+		args = append(args, whereString)
 	}
-	format := "DELETE FROM %s WHERE %s"
-
-	cond := fmt.Sprintf(format, quoteField(table), whereString)
+	cond := fmt.Sprintf(format, args...)
 	if limit > 0 {
 		cond += " LIMIT ?"
 		vals = append(vals, int(limit))
