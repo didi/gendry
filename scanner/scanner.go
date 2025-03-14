@@ -266,10 +266,21 @@ func bind(result map[string]interface{}, target interface{}) (resp error) {
 		if !valuei.CanSet() {
 			continue
 		}
+
 		tagName, ok := lookUpTagName(fieldTypeI)
 		if !ok || "" == tagName {
+			switch fieldTypeI.Type.Kind() {
+			//如果是结构体并且未设置tag，递归调用bind
+			case reflect.Struct, reflect.Ptr:
+				err := bind(result, valuei.Addr().Interface())
+				if nil != err {
+					return err
+				}
+			}
+
 			continue
 		}
+
 		mapValue, ok := result[tagName]
 		if !ok || mapValue == nil {
 			continue
