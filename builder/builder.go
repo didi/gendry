@@ -267,24 +267,35 @@ func getWhereConditions(where map[string]interface{}, ignoreKeys map[string]stru
 		}
 		if strings.HasPrefix(key, "_or") {
 			var (
-				orWheres          []map[string]interface{}
-				orWhereComparable []Comparable
-				ok                bool
+				orWheres  []map[string]interface{}
+				_orWheres [][]map[string]interface{}
+				ok        bool
 			)
+
 			if orWheres, ok = val.([]map[string]interface{}); !ok {
-				return nil, errOrValueType
-			}
-			for _, orWhere := range orWheres {
-				if orWhere == nil {
-					continue
+				if _orWheres, ok = val.([][]map[string]interface{}); !ok {
+					return nil, errOrValueType
 				}
-				orNestWhere, err := getWhereConditions(orWhere, ignoreKeys)
-				if nil != err {
-					return nil, err
-				}
-				orWhereComparable = append(orWhereComparable, NestWhere(orNestWhere))
+			} else {
+				_orWheres = [][]map[string]interface{}{orWheres}
 			}
-			comparables = append(comparables, OrWhere(orWhereComparable))
+
+			var multiOrWhereComparable []Comparable
+			for _, orWheres := range _orWheres {
+				var orWhereComparable []Comparable
+				for _, orWhere := range orWheres {
+					if orWhere == nil {
+						continue
+					}
+					orNestWhere, err := getWhereConditions(orWhere, ignoreKeys)
+					if nil != err {
+						return nil, err
+					}
+					orWhereComparable = append(orWhereComparable, NestWhere(orNestWhere))
+				}
+				multiOrWhereComparable = append(multiOrWhereComparable, OrWhere(orWhereComparable))
+			}
+			comparables = append(comparables, multiOrWhereComparable...)
 			continue
 		}
 		if strings.HasPrefix(key, "_custom_") {

@@ -428,14 +428,14 @@ func Test_BuildUpdate(t *testing.T) {
 					"foo":    "bar",
 					"age >=": 23,
 					"sex in": []interface{}{"male", "female"},
-					"_or": []map[string]interface{}{
+					"_or": [][]map[string]interface{}{
 						{
-							"x1":    11,
-							"x2 >=": 45,
+							{"x1": 11, "x2 >=": 45},
+							{"x3": "234", "x4 <>": "tx2"},
 						},
 						{
-							"x3":    "234",
-							"x4 <>": "tx2",
+							{"id": "11"},
+							{"act_id": "11"},
 						},
 					},
 				},
@@ -445,8 +445,8 @@ func Test_BuildUpdate(t *testing.T) {
 				},
 			},
 			out: outStruct{
-				cond: "UPDATE tb SET district=?,score=? WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND foo=? AND sex IN (?,?) AND age>=?)",
-				vals: []interface{}{"010", 50, 11, 45, "234", "tx2", "bar", "male", "female", 23},
+				cond: "UPDATE tb SET district=?,score=? WHERE (((x1=? AND x2>=?) OR (x3=? AND x4!=?)) AND ((id=?) OR (act_id=?)) AND foo=? AND sex IN (?,?) AND age>=?)",
+				vals: []interface{}{"010", 50, 11, 45, "234", "tx2", "11", "11", "bar", "male", "female", 23},
 				err:  nil,
 			},
 		},
